@@ -1,0 +1,13 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+*.sqlite3
+lifed.db
+backend/lifed.db
+.env
+.env.local
+node_modules/
+.next/
+out/
