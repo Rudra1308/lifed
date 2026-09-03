@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun, KeyRound, Radio, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Moon, Sun, KeyRound } from "lucide-react";
 import { ApiKeyModal } from "@/components/modals/api-key-modal";
 import { api } from "@/lib/api";
 
@@ -13,7 +12,7 @@ interface HeaderProps {
 }
 
 export function Header({ title = "Command Center", subtitle }: HeaderProps) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
@@ -40,9 +39,7 @@ export function Header({ title = "Command Center", subtitle }: HeaderProps) {
         const settings = await api.getSettings();
         setHasApiKey(settings.has_api_key);
       }
-    } catch {
-      // Backend may be offline initially
-    }
+    } catch {}
   };
 
   const toggleTheme = () => {
@@ -51,24 +48,24 @@ export function Header({ title = "Command Center", subtitle }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/70 bg-background/80 px-6 backdrop-blur-md font-mono">
         {/* Left: Page Title & Context */}
         <div className="flex items-center space-x-3">
           <div>
-            <h1 className="text-sm font-semibold tracking-tight text-foreground font-sans">
+            <h1 className="text-base md:text-lg font-bold tracking-tight text-foreground font-mono">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-[11px] font-mono text-muted-foreground">{subtitle}</p>
+              <p className="text-xs font-mono font-bold text-muted-foreground">{subtitle}</p>
             )}
           </div>
         </div>
 
         {/* Right Controls: Status, Key Modal, Theme Switch */}
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center space-x-3">
           {/* Backend Health Status */}
           <div
-            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full border border-border/50 bg-background/50 text-[11px] font-mono text-muted-foreground"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full border border-border/60 bg-background/60 text-xs font-mono font-bold text-muted-foreground"
             title={backendOnline === true ? "FastAPI Backend Online" : "Backend Disconnected"}
           >
             <span
@@ -80,7 +77,7 @@ export function Header({ title = "Command Center", subtitle }: HeaderProps) {
                   : "bg-amber-500"
               }`}
             />
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline font-bold">
               {backendOnline === true ? "API ONLINE" : backendOnline === false ? "OFFLINE" : "CONNECTING"}
             </span>
           </div>
@@ -88,29 +85,29 @@ export function Header({ title = "Command Center", subtitle }: HeaderProps) {
           {/* OpenRouter Key Trigger */}
           <button
             onClick={() => setIsKeyModalOpen(true)}
-            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md border text-xs font-mono transition-colors ${
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-bold transition-colors ${
               hasApiKey
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
-                : "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25"
+                : "border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25"
             }`}
             title="Configure OpenRouter API Key & Model"
           >
-            <KeyRound className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{hasApiKey ? "AI KEY READY" : "SET AI KEY"}</span>
+            <KeyRound className="w-4 h-4" />
+            <span className="hidden sm:inline font-bold">{hasApiKey ? "AI KEY READY" : "SET AI KEY"}</span>
           </button>
 
-          {/* Theme Toggle Button (Top-Right per PRD Section 7.3 & UI-02) */}
+          {/* Theme Toggle Button */}
           {mounted && (
             <button
               onClick={toggleTheme}
               aria-label="Toggle Dark and Light theme"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-card/60 backdrop-blur-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/70 bg-card/60 backdrop-blur-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               title={`Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} Mode`}
             >
               {resolvedTheme === "dark" ? (
-                <Sun className="h-4 w-4 text-amber-400 transition-transform rotate-0 scale-100" />
+                <Sun className="h-4 w-4 text-amber-400" />
               ) : (
-                <Moon className="h-4 w-4 text-indigo-500 transition-transform rotate-0 scale-100" />
+                <Moon className="h-4 w-4 text-indigo-500" />
               )}
             </button>
           )}

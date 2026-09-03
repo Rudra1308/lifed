@@ -1,4 +1,4 @@
-﻿import type { Config } from "tailwindcss";
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   darkMode: ["class"],
@@ -9,6 +9,22 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        "2xs": ["0.8125rem", { lineHeight: "1.2rem" }], // 13px
+        xs: ["1rem", { lineHeight: "1.45rem" }],        // 16px (was 12px, +4px)
+        sm: ["1.125rem", { lineHeight: "1.6rem" }],     // 18px (was 14px, +4px)
+        base: ["1.25rem", { lineHeight: "1.75rem" }],   // 20px (was 16px, +4px)
+        lg: ["1.375rem", { lineHeight: "1.875rem" }],   // 22px (was 18px, +4px)
+        xl: ["1.5rem", { lineHeight: "2rem" }],         // 24px (was 20px, +4px)
+        "2xl": ["1.75rem", { lineHeight: "2.25rem" }],  // 28px (was 24px, +4px)
+        "3xl": ["2.125rem", { lineHeight: "2.5rem" }],  // 34px (was 30px, +4px)
+        "4xl": ["2.5rem", { lineHeight: "2.8rem" }],    // 40px (was 36px, +4px)
+        "5xl": ["3.25rem", { lineHeight: "3.5rem" }],   // 52px (was 48px, +4px)
+      },
+      fontFamily: {
+        mono: ['"Courier New"', "Courier", '"Lucida Console"', "Monaco", "monospace"],
+        sans: ['"Courier New"', "Courier", '"Lucida Console"', "Monaco", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -40,10 +56,6 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      fontFamily: {
-        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
-        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
     },
   },

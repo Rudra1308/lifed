@@ -1,28 +1,30 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    font-size: 20px; /* Base font size increased by 4px (16px -> 20px) */
     --background: 0 0% 98%;
     --foreground: 0 0% 10%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
-    --primary: 0 0% 12%;
+    --primary: 0 0% 10%;
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 94%;
     --secondary-foreground: 0 0% 15%;
     --muted: 0 0% 92%;
-    --muted-foreground: 0 0% 40%;
+    --muted-foreground: 0 0% 38%;
     --accent: 0 0% 90%;
-    --accent-foreground: 0 0% 12%;
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
+    --accent-foreground: 0 0% 10%;
+    --border: 0 0% 86%;
+    --input: 0 0% 86%;
     --ring: 0 0% 20%;
     --radius: 0.5rem;
   }
 
   .dark {
+    font-size: 20px;
     --background: 240 10% 4%;
     --foreground: 0 0% 98%;
     --card: 240 10% 6%;
@@ -35,8 +37,8 @@
     --muted-foreground: 240 5% 65%;
     --accent: 240 6% 16%;
     --accent-foreground: 0 0% 98%;
-    --border: 240 6% 16%;
-    --input: 240 6% 16%;
+    --border: 240 6% 18%;
+    --input: 240 6% 18%;
     --ring: 0 0% 80%;
   }
 }
@@ -44,25 +46,30 @@
 @layer base {
   * {
     @apply border-border;
+    font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700 !important;
+    font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
   }
 }
 
-/* Custom scrollbars for technical aesthetic */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(150, 150, 150, 0.2);
+  background: rgba(150, 150, 150, 0.25);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(150, 150, 150, 0.4);
+  background: rgba(150, 150, 150, 0.45);
 }

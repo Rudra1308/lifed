@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Home,
   LayoutDashboard,
   CalendarCheck,
   CheckSquare,
@@ -14,12 +15,12 @@ import {
   Settings,
   Menu,
   X,
-  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/brief", label: "Daily Brief", icon: CalendarCheck },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/projects", label: "Projects", icon: FolderKanban },
@@ -38,10 +39,10 @@ export function Sidebar() {
       {/* Mobile menu trigger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
+        className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
         aria-label="Toggle navigation"
       >
-        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
 
       {/* Backdrop for mobile */}
@@ -55,19 +56,19 @@ export function Sidebar() {
       {/* Main Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-40 flex w-64 flex-col border-r border-border/60 bg-card/85 backdrop-blur-xl transition-transform duration-200 ease-in-out md:translate-x-0",
+          "fixed top-0 bottom-0 left-0 z-40 flex w-64 flex-col border-r border-border/70 bg-card/85 backdrop-blur-xl transition-transform duration-200 ease-in-out md:translate-x-0 font-mono",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         {/* Brand identity */}
-        <div className="flex h-14 items-center px-6 border-b border-border/50">
+        <div className="flex h-16 items-center px-6 border-b border-border/60">
           <Link href="/" className="flex items-center space-x-2.5 group">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-mono font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-mono font-bold text-base shadow-sm group-hover:scale-105 transition-transform">
               L
             </div>
             <div>
-              <span className="font-bold tracking-tight text-foreground text-base">Lifed</span>
-              <span className="ml-2 rounded border border-border/50 bg-secondary/50 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground uppercase">
+              <span className="font-bold tracking-tight text-foreground text-lg">Lifed</span>
+              <span className="ml-2 rounded border border-border/60 bg-secondary/70 px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted-foreground uppercase">
                 v2.0
               </span>
             </div>
@@ -75,8 +76,8 @@ export function Sidebar() {
         </div>
 
         {/* Navigation links */}
-        <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
-          <div className="px-3 py-1.5 text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+        <nav className="flex-1 space-y-1.5 p-3 overflow-y-auto">
+          <div className="px-3 py-2 text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
             Command Center
           </div>
 
@@ -91,7 +92,7 @@ export function Sidebar() {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-all group select-none",
+                  "flex items-center space-x-3 rounded-lg px-3.5 py-2.5 text-sm font-bold font-mono transition-all group select-none",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -103,22 +104,22 @@ export function Sidebar() {
                     isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate font-bold">{item.label}</span>
                 {isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground/80" />
+                  <span className="ml-auto h-2 w-2 rounded-full bg-primary-foreground/90" />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Monospace System Metadata Footer */}
-        <div className="p-4 border-t border-border/50 font-mono text-[11px] text-muted-foreground space-y-1">
+        {/* Monospace System Metadata Footer (Bold) */}
+        <div className="p-4 border-t border-border/60 font-mono text-xs font-bold text-muted-foreground space-y-1">
           <div className="flex items-center justify-between">
-            <span>CORE LOOP</span>
-            <span className="text-foreground/80 font-bold">ACTIVE</span>
+            <span className="font-bold">CORE LOOP</span>
+            <span className="text-foreground font-bold">ACTIVE</span>
           </div>
-          <p className="text-[10px] text-muted-foreground/70 truncate">
+          <p className="text-[11px] font-bold text-muted-foreground/80 truncate">
             Understand → Plan → Execute
           </p>
         </div>
