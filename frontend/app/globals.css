@@ -4,7 +4,6 @@
 
 @layer base {
   :root {
-    font-size: 20px; /* Base font size increased by 4px (16px -> 20px) */
     --background: 0 0% 98%;
     --foreground: 0 0% 10%;
     --card: 0 0% 100%;
@@ -24,7 +23,6 @@
   }
 
   .dark {
-    font-size: 20px;
     --background: 240 10% 4%;
     --foreground: 0 0% 98%;
     --card: 240 10% 6%;
@@ -43,19 +41,25 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-    font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    font-weight: 700 !important;
-    font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
-  }
+html {
+  font-size: 20px !important; /* Base font size increased by 4px */
+  font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
+  font-size: 1rem;
+}
+
+* {
+  @apply border-border;
+  font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700 !important;
+  font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace !important;
 }
 
 /* Custom scrollbars */

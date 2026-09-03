@@ -30,99 +30,98 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-6 text-center select-none overflow-hidden">
+    <div className="relative min-h-screen w-full flex flex-col justify-between items-center p-6 text-center select-none overflow-hidden">
       {/* Top Floating Controls */}
-      <header className="fixed top-5 left-6 right-6 z-30 flex items-center justify-between pointer-events-auto">
-        <div className="flex items-center space-x-2 px-3 py-1 rounded-full border border-border/50 bg-card/60 backdrop-blur-md font-mono text-xs font-bold text-muted-foreground">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="uppercase tracking-widest text-foreground font-bold">LIFED OS v2.0</span>
+      <header className="w-full max-w-6xl flex items-center justify-between pointer-events-auto py-2">
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full border border-border/60 bg-card/70 backdrop-blur-md font-mono text-xs font-bold text-muted-foreground shadow-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="uppercase tracking-widest text-foreground font-bold">LIFED v2.0</span>
         </div>
 
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsKeyModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border/70 bg-card/60 backdrop-blur-md text-xs font-mono font-bold hover:bg-accent transition-colors"
+            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-border/70 bg-card/70 backdrop-blur-md text-xs font-mono font-bold hover:bg-accent transition-colors shadow-sm"
           >
-            <KeyRound className="w-3.5 h-3.5" />
-            <span>{hasApiKey ? "AI KEY READY" : "SET AI KEY"}</span>
+            <KeyRound className="w-4 h-4" />
+            <span className="font-bold">{hasApiKey ? "AI KEY READY" : "SET AI KEY"}</span>
           </button>
 
           {mounted && (
             <button
               onClick={toggleTheme}
               aria-label="Toggle Dark and Light theme"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/70 bg-card/60 backdrop-blur-md hover:bg-accent transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/70 bg-card/70 backdrop-blur-md hover:bg-accent transition-colors shadow-sm"
               title={`Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} Mode`}
             >
               {resolvedTheme === "dark" ? (
-                <Sun className="h-4 w-4 text-amber-400" />
+                <Sun className="h-5 w-5 text-amber-400" />
               ) : (
-                <Moon className="h-4 w-4 text-indigo-500" />
+                <Moon className="h-5 w-5 text-indigo-500" />
               )}
             </button>
           )}
         </div>
       </header>
 
-      {/* Main Center Display: lifed in the Center */}
-      <main className="relative z-20 flex flex-col items-center justify-center max-w-3xl mx-auto space-y-6 animate-in fade-in-50 duration-500">
-        {/* Centered Brand Title */}
-        <div className="space-y-3">
-          <h1 className="text-6xl sm:text-8xl md:text-9xl font-extrabold tracking-widest font-mono text-foreground uppercase drop-shadow-md">
+      {/* Main Center Display: lifed in the Center of the Viewport */}
+      <main className="my-auto flex flex-col items-center justify-center max-w-4xl mx-auto space-y-8 py-12">
+        <div className="space-y-4">
+          <h1 className="text-7xl sm:text-8xl md:text-9xl font-extrabold tracking-widest font-mono text-foreground uppercase drop-shadow-md">
             lifed<span className="animate-pulse text-primary font-bold">_</span>
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg font-bold font-mono tracking-widest text-muted-foreground uppercase">
+          <p className="text-base sm:text-lg md:text-xl font-bold font-mono tracking-widest text-muted-foreground uppercase">
             Personal AI Command Center
           </p>
 
-          <p className="max-w-lg mx-auto text-xs sm:text-sm font-mono font-bold text-muted-foreground/80 leading-relaxed pt-2">
+          <p className="max-w-xl mx-auto text-xs sm:text-sm font-mono font-bold text-muted-foreground/80 leading-relaxed pt-2">
             Understand → Remember → Plan → Decide → Execute → Learn
           </p>
         </div>
 
         {/* Primary Action Button */}
-        <div className="pt-4">
+        <div className="pt-2">
           <Link href="/dashboard">
             <Button
               size="lg"
-              className="font-mono font-bold text-sm tracking-wider px-8 py-4 h-auto rounded-xl shadow-xl hover:scale-105 transition-transform"
+              className="font-mono font-bold text-sm tracking-wider px-8 py-4 h-auto rounded-xl shadow-2xl hover:scale-105 transition-transform bg-primary text-primary-foreground border border-border/60"
             >
-              <span>ENTER COMMAND CENTER</span>
+              <span className="font-bold">ENTER COMMAND CENTER</span>
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
         </div>
 
         {/* Quick Launch Direct Shortcuts */}
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-6 font-mono text-xs font-bold">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 pt-4 font-mono text-xs font-bold">
           <Link href="/tasks">
-            <button className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
-              <CheckSquare className="w-3.5 h-3.5" />
+            <button className="flex items-center space-x-2 px-3.5 py-2 rounded-lg border border-border/70 bg-card/60 backdrop-blur-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground font-bold shadow-xs">
+              <CheckSquare className="w-4 h-4" />
               <span>Tasks</span>
             </button>
           </Link>
           <Link href="/brief">
-            <button className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
-              <CalendarCheck className="w-3.5 h-3.5" />
+            <button className="flex items-center space-x-2 px-3.5 py-2 rounded-lg border border-border/70 bg-card/60 backdrop-blur-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground font-bold shadow-xs">
+              <CalendarCheck className="w-4 h-4" />
               <span>Daily Brief</span>
             </button>
           </Link>
           <Link href="/chat">
-            <button className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
-              <Bot className="w-3.5 h-3.5" />
+            <button className="flex items-center space-x-2 px-3.5 py-2 rounded-lg border border-border/70 bg-card/60 backdrop-blur-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground font-bold shadow-xs">
+              <Bot className="w-4 h-4" />
               <span>AI Chat</span>
             </button>
           </Link>
           <Link href="/memory">
-            <button className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
-              <Brain className="w-3.5 h-3.5" />
+            <button className="flex items-center space-x-2 px-3.5 py-2 rounded-lg border border-border/70 bg-card/60 backdrop-blur-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground font-bold shadow-xs">
+              <Brain className="w-4 h-4" />
               <span>Memory</span>
             </button>
           </Link>
           <Link href="/settings">
-            <button className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
-              <Settings className="w-3.5 h-3.5" />
+            <button className="flex items-center space-x-2 px-3.5 py-2 rounded-lg border border-border/70 bg-card/60 backdrop-blur-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground font-bold shadow-xs">
+              <Settings className="w-4 h-4" />
               <span>Settings</span>
             </button>
           </Link>
@@ -130,7 +129,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer Info */}
-      <footer className="fixed bottom-4 left-0 right-0 z-20 font-mono text-xs font-bold text-muted-foreground/60 text-center pointer-events-none">
+      <footer className="w-full py-2 font-mono text-xs font-bold text-muted-foreground/60 text-center">
         Local-First Data Ownership · ONNX Vector Retrieval · Multi-Model Tool Orchestration
       </footer>
 
