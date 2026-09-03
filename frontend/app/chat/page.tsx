@@ -85,7 +85,7 @@ export default function ChatPage() {
       id: "init",
       role: "assistant",
       content:
-        "Hello, I am Lifed â€” your personal AI command center. I have direct access to your tasks, goals, memories, and daily schedule. How can I assist your focus today?",
+        "Hello, I am Lifed, your personal AI command center. I have direct access to your tasks, goals, memories, and daily schedule. How can I assist your focus today?",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -156,26 +156,23 @@ export default function ChatPage() {
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex items-start space-x-3 ${
-                msg.role === "user" ? "flex-row-reverse space-x-reverse" : ""
-              }`}
+              className={`flex items-start space-x-3 ${msg.role === "user" ? "flex-row-reverse space-x-reverse" : ""
+                }`}
             >
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-secondary text-foreground border-border"
-                }`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${msg.role === "user"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary text-foreground border-border"
+                  }`}
               >
                 {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
 
               <div
-                className={`max-w-[85%] rounded-xl p-3.5 shadow-xs text-sm ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground font-sans"
-                    : "border border-border/70 bg-background/60 text-foreground font-sans"
-                }`}
+                className={`max-w-[85%] rounded-xl p-3.5 shadow-xs text-sm ${msg.role === "user"
+                  ? "bg-primary text-primary-foreground font-sans"
+                  : "border border-border/70 bg-background/60 text-foreground font-sans"
+                  }`}
               >
                 {/* Tool Executions */}
                 {msg.toolCalls && msg.toolCalls.length > 0 && (
@@ -188,9 +185,8 @@ export default function ChatPage() {
 
                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                 <div
-                  className={`mt-1.5 font-mono text-[10px] ${
-                    msg.role === "user" ? "text-primary-foreground/70 text-right" : "text-muted-foreground"
-                  }`}
+                  className={`mt-1.5 font-mono text-[10px] ${msg.role === "user" ? "text-primary-foreground/70 text-right" : "text-muted-foreground"
+                    }`}
                 >
                   {msg.timestamp}
                 </div>
