@@ -74,8 +74,20 @@ async def transcribe_audio(
     # 2. Try SpeechRecognition with AudioFile
     try:
         import speech_recognition as sr
+        import subprocess
+
+        # Convert webm/ogg/any audio to 16kHz mono WAV via ffmpeg
+        wav_bytes = audio_bytes
+        try:
+            cmd = ["ffmpeg", "-y", "-i", "pipe:0", "-ar", "16000", "-ac", "1", "-f", "wav", "pipe:1"]
+            conv = subprocess.run(cmd, input=audio_bytes, capture_output=True, check=True)
+            if conv.stdout and len(conv.stdout) > 44:
+                wav_bytes = conv.stdout
+        except Exception as e:
+            logger.debug(f"FFmpeg conversion note: {e}")
+
         recognizer = sr.Recognizer()
-        with io.BytesIO(audio_bytes) as audio_file:
+        with io.BytesIO(wav_bytes) as audio_file:
             try:
                 with sr.AudioFile(audio_file) as source:
                     audio_data = recognizer.record(source)

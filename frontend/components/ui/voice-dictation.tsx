@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, AlertCircle, Loader2 } from "lucide-react";
+import { Mic, AlertCircle, Loader2 } from "lucide-react";
 
 interface VoiceDictationProps {
   onTranscript: (transcript: string) => void;
@@ -21,75 +21,81 @@ export function VoiceDictation({
   const [audioLevel, setAudioLevel] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const shouldListenRef = useRef(false);
-  const recognitionRef = useRef<any>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const hasTranscribedRef = useRef(false);
   const animFrameRef = useRef<number | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const speechRecognizedRef = useRef(false);
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      stopAll();
+      stopMedia();
     };
   }, []);
 
-  const stopAll = () => {
-    shouldListenRef.current = false;
+  const stopMedia = () => {
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
       recognitionRef.current = null;
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       try {
         mediaRecorderRef.current.stop();
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     }
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
+    if (audioCtxRef.current) {
+      try {
+        audioCtxRef.current.close();
+      } catch (e) {}
+      audioCtxRef.current = null;
+    }
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
     }
-    setIsListening(false);
-    if (onListeningChange) onListeningChange(false);
+    setAudioLevel(0);
   };
 
   const startListening = async () => {
     setErrorMsg(null);
-    hasTranscribedRef.current = false;
+    speechRecognizedRef.current = false;
     audioChunksRef.current = [];
 
-    // 1. Acquire microphone stream to verify permissions & warm up hardware
+    // 1. Acquire microphone access
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       mediaStreamRef.current = stream;
     } catch (err: any) {
-      console.error("Microphone access error:", err);
-      setErrorMsg("Microphone access denied. Please allow microphone in Windows/browser.");
+      console.error("[Voice] Microphone access error:", err);
+      setErrorMsg("Microphone not available or access denied.");
       return;
     }
 
-    shouldListenRef.current = true;
     setIsListening(true);
     if (onListeningChange) onListeningChange(true);
 
-    // 2. Real-time audio volume visualizer using AudioContext
+    // 2. Real-time Volume Visualizer
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
         const audioCtx = new AudioCtx();
+        audioCtxRef.current = audioCtx;
         const source = audioCtx.createMediaStreamSource(stream);
         const analyser = audioCtx.createAnalyser();
         analyser.fftSize = 64;
@@ -97,7 +103,6 @@ export function VoiceDictation({
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
         const checkVolume = () => {
-          if (!shouldListenRef.current) return;
           analyser.getByteFrequencyData(dataArray);
           let sum = 0;
           for (let i = 0; i < dataArray.length; i++) {
@@ -110,113 +115,90 @@ export function VoiceDictation({
         checkVolume();
       }
     } catch (e) {
-      // AudioContext optional fallback
+      // AudioContext optional
     }
 
-    // 3. Start MediaRecorder as fallback/dual recorder
+    // 3. Initialize MediaRecorder (Guaranteed to record voice without cutting off)
     try {
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : MediaRecorder.isTypeSupported("audio/ogg")
-        ? "audio/ogg"
-        : "";
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      const mimeTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+        "audio/mp4",
+      ];
+      let selectedMime = "";
+      for (const m of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(m)) {
+          selectedMime = m;
+          break;
+        }
+      }
+
+      const recorder = selectedMime
+        ? new MediaRecorder(stream, { mimeType: selectedMime })
+        : new MediaRecorder(stream);
+
       recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
+        if (e.data && e.data.size > 0) {
           audioChunksRef.current.push(e.data);
         }
       };
-      recorder.start(250);
+
+      recorder.start(100);
       mediaRecorderRef.current = recorder;
     } catch (e) {
-      console.warn("MediaRecorder initialization note:", e);
+      console.warn("[Voice] MediaRecorder init error:", e);
     }
 
-    // 4. Start Web Speech Recognition with auto-restart on silence
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    // 4. In standard Chrome/Edge browser (non-Electron), optionally run SpeechRecognition in parallel
+    const isElectron = typeof window !== "undefined" && Boolean((window as any).electronAPI?.isDesktop);
+    if (!isElectron) {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    if (SpeechRecognition) {
-      initSpeechRecognition(SpeechRecognition);
-    }
-  };
+      if (SpeechRecognition) {
+        try {
+          const rec = new SpeechRecognition();
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.lang = "en-US";
 
-  const initSpeechRecognition = (SpeechRecognitionClass: any) => {
-    if (!shouldListenRef.current) return;
+          rec.onresult = (event: any) => {
+            let transcript = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              transcript += event.results[i][0].transcript;
+            }
+            if (transcript.trim()) {
+              speechRecognizedRef.current = true;
+              onTranscript(transcript.trim());
+            }
+          };
 
-    try {
-      const recognition = new SpeechRecognitionClass();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
+          // NEVER call stop or cancel on speech errors! MediaRecorder is recording.
+          rec.onerror = (e: any) => {
+            console.debug("[Voice] Browser speech recognition event:", e.error);
+          };
 
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        let final = "";
+          rec.onend = () => {
+            // Keep alive if still listening in browser
+            if (mediaStreamRef.current && mediaStreamRef.current.active) {
+              try {
+                rec.start();
+              } catch (e) {}
+            }
+          };
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript;
-          } else {
-            interim += event.results[i][0].transcript;
-          }
+          rec.start();
+          recognitionRef.current = rec;
+        } catch (e) {
+          console.debug("[Voice] Browser speech API start note:", e);
         }
-
-        const text = final || interim;
-        if (text.trim()) {
-          hasTranscribedRef.current = true;
-          onTranscript(text.trim());
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        // "no-speech" means user hasn't spoken yet; DO NOT turn off!
-        if (event.error === "no-speech") {
-          console.debug("[Voice] Waiting for speech...");
-          return;
-        }
-
-        if (event.error === "not-allowed") {
-          setErrorMsg("Microphone permission denied.");
-          stopAll();
-          return;
-        }
-
-        // In Electron, "network" error occurs when Chromium cannot reach Google cloud speech.
-        // We log and let MediaRecorder handle transcription on stop.
-        if (event.error === "network") {
-          console.info("[Voice] Web Speech cloud offline; using local audio recorder.");
-          return;
-        }
-
-        console.warn("[Voice] SpeechRecognition error:", event.error);
-      };
-
-      recognition.onend = () => {
-        // Automatically restart if user is still in listening mode
-        if (shouldListenRef.current) {
-          try {
-            recognition.start();
-          } catch (e) {
-            // If restart fails, recreate after small pause
-            setTimeout(() => {
-              if (shouldListenRef.current) {
-                initSpeechRecognition(SpeechRecognitionClass);
-              }
-            }, 300);
-          }
-        }
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
-    } catch (err) {
-      console.warn("[Voice] Web Speech start note:", err);
+      }
     }
   };
 
   const stopListening = async () => {
-    shouldListenRef.current = false;
     setIsListening(false);
     if (onListeningChange) onListeningChange(false);
 
@@ -232,50 +214,56 @@ export function VoiceDictation({
       animFrameRef.current = null;
     }
 
-    // If Web Speech already produced transcripts, we don't need backend transcription
-    if (hasTranscribedRef.current) {
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
-      }
+    // If browser Web Speech already delivered transcripts in live mode, stop here
+    if (speechRecognizedRef.current) {
+      stopMedia();
       return;
     }
 
-    // If no text was produced yet (e.g. Electron offline speech), transcribe recorded audio via backend
-    if (mediaRecorderRef.current && audioChunksRef.current.length > 0) {
+    // Stop recorder and collect final audio chunks
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       setIsProcessing(true);
-      try {
-        const mimeType = mediaRecorderRef.current.mimeType || "audio/webm";
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+      const recorder = mediaRecorderRef.current;
 
-        if (audioBlob.size > 1000) {
-          const formData = new FormData();
-          formData.append("file", audioBlob, "dictation.webm");
+      recorder.onstop = async () => {
+        try {
+          const mimeType = recorder.mimeType || "audio/webm";
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
 
-          const res = await fetch("http://127.0.0.1:8000/api/voice/transcribe", {
-            method: "POST",
-            body: formData,
-          });
+          if (audioBlob.size > 200) {
+            const formData = new FormData();
+            formData.append("file", audioBlob, "recording.webm");
 
-          if (res.ok) {
-            const data = await res.json();
-            if (data.text && data.text.trim()) {
-              onTranscript(data.text.trim());
-            } else if (data.status === "no_speech_detected") {
-              console.debug("[Voice] No speech was detected in audio clip.");
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+            const res = await fetch(`${apiUrl}/api/voice/transcribe`, {
+              method: "POST",
+              body: formData,
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              if (data.text && data.text.trim()) {
+                onTranscript(data.text.trim());
+              }
             }
           }
+        } catch (err: any) {
+          console.error("[Voice] Transcription error:", err);
+          setErrorMsg("Transcription failed. Please check backend connection.");
+        } finally {
+          setIsProcessing(false);
+          stopMedia();
         }
-      } catch (err: any) {
-        console.warn("[Voice] Backend transcription fallback error:", err);
-      } finally {
-        setIsProcessing(false);
-      }
-    }
+      };
 
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
+      try {
+        recorder.stop();
+      } catch (e) {
+        setIsProcessing(false);
+        stopMedia();
+      }
+    } else {
+      stopMedia();
     }
   };
 
@@ -307,18 +295,18 @@ export function VoiceDictation({
         disabled={isProcessing}
         title={
           isProcessing
-            ? "Processing audio..."
+            ? "Transcribing audio..."
             : isListening
-            ? "Listening... click to stop"
-            : "Start voice dictation"
+            ? "Recording... click to finish"
+            : "Click to speak"
         }
         className={`flex items-center justify-center rounded-xl transition-all duration-300 ${
           sizeClasses[buttonSize]
         } ${
           isProcessing
-            ? "bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse"
+            ? "bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse cursor-wait"
             : isListening
-            ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/20 scale-105"
+            ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/25 scale-105"
             : "bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/40"
         }`}
       >
@@ -353,4 +341,5 @@ export function VoiceDictation({
     </div>
   );
 }
+
 
