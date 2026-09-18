@@ -132,12 +132,79 @@ Tool executions are logged unobtrusively in collapsible technical cards (`ToolCa
 
 ---
 
-## Getting Started
+---
+
+## Running as a Desktop Application
+
+Lifed is packaged with a dedicated **Electron Desktop Shell** that manages the Python FastAPI backend, provides global hotkeys, and supports real-time voice dictation.
+
+### One-Click Desktop Launch (Windows)
+Double-click `lifed.bat` in the project root. It will verify dependencies, auto-start the Python backend and Next.js frontend, and open the native Lifed desktop window.
+
+### Command Line Launch (All Platforms)
+```bash
+# 1. Install dependencies
+pip install -r backend/requirements.txt
+cd frontend && npm install
+cd ../desktop && npm install
+
+# 2. Launch the desktop app
+cd ../frontend && npm run desktop
+```
+
+### Desktop Capabilities
+- **Global Quick-Capture Overlay (`Alt+Space`)**: Press `Alt+Space` from anywhere in Windows to summon the floating Spotlight/Raycast-style command bar. Capture tasks, define goals, save memories, or query the AI mesh without leaving your current work.
+- **Local Voice-to-Command**: Click the microphone icon to dictate tasks and prompts in real-time with an animated audio waveform.
+- **Auto-Managed Lifecycle**: Launching Lifed automatically spins up the FastAPI backend and frontend; closing the window cleanly shuts down all background processes so ports are never left occupied.
+
+---
+
+## Hybrid Multi-Agent Orchestration
+
+Lifed coordinates local models and cloud intelligence into a collaborative mesh:
+
+| Agent Role | Model | Operation | Cost |
+| :--- | :--- | :--- | :--- |
+| **🧠 Context & Memory Agent** | `gemma4:e4b` (Local Ollama) | Scans vector memories, filters private data, formats context dossier | **$0 Free** |
+| **⚡ Operations & Tool Agent** | `llama3:latest` (Local Ollama) | Executes SQLite CRUD actions (`create_task`, `update_task`, `create_goal`) | **$0 Free** |
+| **🎯 Executive Strategist** | Google Gemini 2.0 / OpenRouter | Evaluates long-term trade-offs, synthesizes strategy & planning rationale | Free tier / Cloud |
+
+*Offline Fallback: If offline or without cloud API keys, `llama3:latest` seamlessly completes all planning and synthesis locally on your machine.*
+
+---
+
+## Desktop Application Mode (Electron)
+
+Lifed can run as a native desktop application with a global quick-capture overlay and automatic lifecycle management.
+
+### One-Click Windows Launch
+Double-click `lifed.bat` in the project root. It will:
+1. Automatically verify and install desktop shell dependencies.
+2. Auto-spawn the Python FastAPI backend on port `8000`.
+3. Auto-spawn the Next.js server on port `3000`.
+4. Open the native desktop command center window.
+
+### Global Quick-Capture Overlay (`Ctrl+Space`)
+- Press **`Ctrl+Space`** from anywhere on your system to summon the floating Spotlight-style quick-capture HUD.
+- Enter quick tasks, goals, memories, or ask the hybrid multi-agent mesh questions directly.
+- Click the **Microphone** icon to dictate with real-time voice-to-text.
+- Press **`Esc`** to dismiss the overlay or **`Enter`** to submit.
+
+### Launching Desktop via Command Line
+```bash
+cd frontend
+npm run desktop
+```
+
+---
+
+## Getting Started (Web / Localhost)
 
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **Python**: 3.10 or higher
-- **OpenRouter API Key**: (Free or paid key from [openrouter.ai](https://openrouter.ai/))
+- **Local Models (Optional)**: Ollama with `llama3:latest` and `gemma4:e4b`
+- **Cloud Models (Optional)**: Google Gemini API key or OpenRouter API key
 
 ### 1. Repository Setup
 ```bash
@@ -169,12 +236,16 @@ npm run dev
 ```
 
 ### 4. Zero-Config UI Setup (No File Edits Required)
-1. Open [http://localhost:3000](http://localhost:3000) in your browser.
-2. Click the **"SET AI KEY"** button in the top-right corner of the header (or navigate to **Settings**).
-3. Paste your OpenRouter API key, choose your preferred target model (e.g., `anthropic/claude-3.5-sonnet` or `google/gemini-2.0-flash-001`), and click **Save Settings**.
-4. You are ready to chat, plan, and command your AI operating system!
+1. Open [http://localhost:3000](http://localhost:3000) in your browser (or launch via `lifed.bat`).
+2. Click the **"SET AI KEY"** button in the top-right corner of the header.
+3. Configure your preferences across the tabs:
+   - **Hybrid Mesh**: Choose Hybrid, 100% Local, or Cloud Only.
+   - **Local (Ollama)**: Test connection to `http://localhost:11434/v1`.
+   - **Google Gemini**: Enter your free Gemini API key from Google AI Studio.
+   - **OpenRouter**: Enter OpenRouter key if desired.
+4. Click **Save Settings** and command your AI operating system!
 
-*(Alternatively, copy `.env.example` to `.env` and set `OPENROUTER_API_KEY=sk-or-v1-...`)*
+
 
 ---
 

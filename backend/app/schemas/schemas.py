@@ -1,4 +1,4 @@
-﻿from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Any
 from datetime import datetime
 
@@ -17,10 +17,24 @@ class SettingsRead(BaseModel):
     current_model: str
     default_model: str
     database_url: str
+    has_gemini_key: bool = False
+    gemini_key_source: str = "missing"
+    gemini_model: str = "gemini-2.0-flash"
+    ollama_base_url: str = "http://localhost:11434/v1"
+    ollama_planner_model: str = "llama3:latest"
+    ollama_context_model: str = "gemma4:e4b"
+    orchestration_mode: str = "hybrid"
 
 class SettingsUpdate(BaseModel):
     openrouter_api_key: Optional[str] = None
     model: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+    gemini_model: Optional[str] = None
+    ollama_base_url: Optional[str] = None
+    ollama_planner_model: Optional[str] = None
+    ollama_context_model: Optional[str] = None
+    orchestration_mode: Optional[str] = None
+
 
 # Goals
 class GoalBase(BaseModel):

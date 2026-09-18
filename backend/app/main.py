@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from backend.app.config import settings
@@ -13,6 +13,7 @@ from backend.app.routers import (
     chat,
     memories,
     plan,
+    voice,
 )
 
 @asynccontextmanager
@@ -45,6 +46,7 @@ app.include_router(dashboard.router)
 app.include_router(chat.router)
 app.include_router(memories.router)
 app.include_router(plan.router)
+app.include_router(voice.router)
 
 @app.get("/")
 def root():

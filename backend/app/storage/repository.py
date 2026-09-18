@@ -1,4 +1,4 @@
-﻿from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from backend.app.models.models import User, Goal, Project, Task, Memory, Conversation, CalendarEvent, DailyPlan
 import json
@@ -24,7 +24,14 @@ class LifedRepository:
         if model is not None:
             user.custom_model = model if model.strip() else None
         if preferences is not None:
-            user.preferences = json.dumps(preferences)
+            current_prefs = {}
+            if user.preferences:
+                try:
+                    current_prefs = json.loads(user.preferences)
+                except Exception:
+                    current_prefs = {}
+            current_prefs.update(preferences)
+            user.preferences = json.dumps(current_prefs)
         self.db.commit()
         self.db.refresh(user)
         return user

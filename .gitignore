@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.db
@@ -11,3 +11,6 @@ backend/lifed.db
 node_modules/
 .next/
 out/
+dist/
+desktop/dist/
+

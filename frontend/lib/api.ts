@@ -1,4 +1,4 @@
-﻿const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export interface SettingsData {
   has_api_key: boolean;
@@ -6,6 +6,13 @@ export interface SettingsData {
   current_model: string;
   default_model: string;
   database_url: string;
+  has_gemini_key?: boolean;
+  gemini_key_source?: string;
+  gemini_model?: string;
+  ollama_base_url?: string;
+  ollama_planner_model?: string;
+  ollama_context_model?: string;
+  orchestration_mode?: string;
 }
 
 export interface Goal {
@@ -100,7 +107,16 @@ export const api = {
   // Health & Settings
   getHealth: () => apiRequest<{ status: string; version: string; app: string }>('/api/health'),
   getSettings: () => apiRequest<SettingsData>('/api/settings'),
-  updateSettings: (data: { openrouter_api_key?: string; model?: string }) =>
+  updateSettings: (data: {
+    openrouter_api_key?: string;
+    model?: string;
+    gemini_api_key?: string;
+    gemini_model?: string;
+    ollama_base_url?: string;
+    ollama_planner_model?: string;
+    ollama_context_model?: string;
+    orchestration_mode?: string;
+  }) =>
     apiRequest<SettingsData>('/api/settings', {
       method: 'POST',
       body: JSON.stringify(data),

@@ -18,6 +18,8 @@ import {
   Zap,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
+import { VoiceDictation } from "@/components/ui/voice-dictation";
+
 
 interface ToolExecution {
   name: string;
@@ -237,6 +239,13 @@ export default function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}
             className="font-sans text-sm h-11 bg-card/70 backdrop-blur-md"
+          />
+          <VoiceDictation
+            buttonSize="md"
+            className="h-11"
+            onTranscript={(text) => {
+              setInput((prev) => (prev ? `${prev} ${text}` : text));
+            }}
           />
           <Button type="submit" disabled={loading || !input.trim()} className="h-11 px-5">
             <Send className="w-4 h-4" />

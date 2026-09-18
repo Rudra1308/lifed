@@ -1,0 +1,37 @@
+{
+  "name": "lifed-desktop",
+  "version": "1.0.0",
+  "description": "Lifed — Personal AI Command Center Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "ai",
+    "command-center",
+    "desktop",
+    "electron"
+  ],
+  "author": "Lifed",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.9",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.lifed.commandcenter",
+    "productName": "Lifed",
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "dir",
+        "portable"
+      ]
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
