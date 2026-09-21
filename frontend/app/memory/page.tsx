@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { Brain, Sparkles, Plus, Trash2, Search, Zap, ShieldCheck } from "lucide-react";
+import { Brain, Plus, Trash2, Search, Zap, ShieldCheck, Pencil } from "lucide-react";
 import { api, MemoryItem } from "@/lib/api";
 
 export default function MemoryPage() {
@@ -21,6 +21,12 @@ export default function MemoryPage() {
   // New memory form
   const [content, setContent] = useState("");
   const [type, setType] = useState<"preference" | "routine" | "rule" | "fact">("preference");
+
+  // Edit memory form
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingMemory, setEditingMemory] = useState<MemoryItem | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editType, setEditType] = useState<"preference" | "routine" | "rule" | "fact">("preference");
 
   const loadMemories = async () => {
     try {
@@ -75,6 +81,37 @@ export default function MemoryPage() {
       setMemories((prev) => [newMem, ...prev]);
       setContent("");
       setIsModalOpen(false);
+    }
+  };
+
+  const openEditModal = (mem: MemoryItem) => {
+    setEditingMemory(mem);
+    setEditContent(mem.content);
+    setEditType(mem.type as any || "preference");
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateMemory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMemory || !editContent.trim()) return;
+    try {
+      await api.updateMemory(editingMemory.id, {
+        content: editContent.trim(),
+        type: editType,
+      });
+      setIsEditModalOpen(false);
+      setEditingMemory(null);
+      await loadMemories();
+    } catch {
+      setMemories((prev) =>
+        prev.map((m) =>
+          m.id === editingMemory.id
+            ? { ...m, content: editContent.trim(), type: editType }
+            : m
+        )
+      );
+      setIsEditModalOpen(false);
+      setEditingMemory(null);
     }
   };
 
@@ -201,13 +238,22 @@ export default function MemoryPage() {
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => deleteMemory(mem.id)}
-                    className="text-muted-foreground/40 hover:text-rose-500 transition-colors p-1"
-                    title="Delete Memory"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <button
+                      onClick={() => openEditModal(mem)}
+                      className="text-muted-foreground/40 hover:text-primary transition-colors p-1"
+                      title="Edit Rule / Memory"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => deleteMemory(mem.id)}
+                      className="text-muted-foreground/40 hover:text-rose-500 transition-colors p-1"
+                      title="Delete Memory"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </CardContent>
               </Card>
             ))
@@ -252,10 +298,10 @@ export default function MemoryPage() {
               onChange={(e: any) => setType(e.target.value)}
               className="w-full h-9 rounded-md border border-border/70 bg-background/50 px-3 text-xs font-mono"
             >
-              <option value="preference">PREFERENCE</option>
-              <option value="routine">ROUTINE</option>
-              <option value="rule">RULE / CONSTRAINT</option>
-              <option value="fact">KEY FACT</option>
+              <option value="preference">PREFERENCE (Working style, tools, UI habits)</option>
+              <option value="rule">RULE (Hard constraints, strict limits)</option>
+              <option value="routine">ROUTINE (Recurring daily rituals)</option>
+              <option value="fact">FACT (Biographical info, key durable context)</option>
             </select>
           </div>
 
@@ -264,7 +310,60 @@ export default function MemoryPage() {
               Cancel
             </Button>
             <Button type="submit" size="sm">
-              Save Memory
+              Remember Fact
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Memory Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Durable Memory & Rules"
+        description="Update your saved preference or hard rule. Vector embeddings will re-index automatically."
+      >
+        <form onSubmit={handleUpdateMemory} className="space-y-4">
+          <div>
+            <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+              Memory / Rule Content
+            </label>
+            <textarea
+              rows={3}
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full rounded-md border border-border/70 bg-background/50 p-3 text-sm font-sans focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+              Category
+            </label>
+            <select
+              value={editType}
+              onChange={(e: any) => setEditType(e.target.value)}
+              className="w-full h-9 rounded-md border border-border/70 bg-background/50 px-3 text-xs font-mono"
+            >
+              <option value="preference">PREFERENCE (Working style, tools, UI habits)</option>
+              <option value="rule">RULE (Hard constraints, strict limits)</option>
+              <option value="routine">ROUTINE (Recurring daily rituals)</option>
+              <option value="fact">FACT (Biographical info, key durable context)</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Save Changes
             </Button>
           </div>
         </form>

@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -14,12 +15,23 @@ from backend.app.routers import (
     memories,
     plan,
     voice,
+    notifications,
 )
+from backend.app.notifications.scheduler import morning_scheduler_loop, stop_scheduler
+from backend.app.notifications.telegram_bot import telegram_bot_polling_loop, stop_telegram_bot
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    yield
+    scheduler_task = asyncio.create_task(morning_scheduler_loop())
+    telegram_task = asyncio.create_task(telegram_bot_polling_loop())
+    try:
+        yield
+    finally:
+        stop_scheduler()
+        stop_telegram_bot()
+        scheduler_task.cancel()
+        telegram_task.cancel()
 
 app = FastAPI(
     title=settings.app_name,
@@ -47,6 +59,7 @@ app.include_router(chat.router)
 app.include_router(memories.router)
 app.include_router(plan.router)
 app.include_router(voice.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 def root():

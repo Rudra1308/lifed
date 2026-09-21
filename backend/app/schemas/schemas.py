@@ -160,3 +160,56 @@ class DailyPlanRead(BaseModel):
     rationale: Optional[str] = None
     created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+# Notifications & Morning Digest
+class NotificationSettings(BaseModel):
+    enabled: bool = False
+    channel: str = "telegram" # telegram, discord, whatsapp, email
+    time: str = "08:00" # HH:MM format
+    telegram_bot_token: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+    discord_webhook_url: Optional[str] = None
+    whatsapp_phone: Optional[str] = None
+    whatsapp_apikey: Optional[str] = None
+    webhook_url: Optional[str] = None # n8n or custom webhook
+    email_to: Optional[str] = None
+    smtp_host: Optional[str] = "smtp.gmail.com"
+    smtp_port: Optional[int] = 587
+    smtp_user: Optional[str] = None
+    smtp_pass: Optional[str] = None
+    example_quote: Optional[str] = "The impediment to action advances action. What stands in the way becomes the way. — Marcus Aurelius"
+    quote_theme: Optional[str] = "Stoic resilience, focus, and relentless momentum"
+    include_tasks: bool = True
+    include_projects: bool = True
+    include_goals: bool = True
+    include_quote: bool = True
+
+class NotificationSettingsUpdate(BaseModel):
+    enabled: Optional[bool] = None
+    channel: Optional[str] = None
+    time: Optional[str] = None
+    telegram_bot_token: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+    discord_webhook_url: Optional[str] = None
+    whatsapp_phone: Optional[str] = None
+    whatsapp_apikey: Optional[str] = None
+    webhook_url: Optional[str] = None
+    email_to: Optional[str] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_user: Optional[str] = None
+    smtp_pass: Optional[str] = None
+    example_quote: Optional[str] = None
+    quote_theme: Optional[str] = None
+    include_tasks: Optional[bool] = None
+    include_projects: Optional[bool] = None
+    include_goals: Optional[bool] = None
+    include_quote: Optional[bool] = None
+
+class QuotePreviewRequest(BaseModel):
+    example_quote: Optional[str] = None
+    quote_theme: Optional[str] = None
+
+class NotificationTestRequest(BaseModel):
+    channel: Optional[str] = None
+

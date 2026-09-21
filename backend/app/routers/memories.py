@@ -1,9 +1,9 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.app.database import get_db
 from backend.app.storage.repository import LifedRepository
-from backend.app.schemas.schemas import MemoryCreate, MemoryRead, MemorySearchResult
+from backend.app.schemas.schemas import MemoryCreate, MemoryUpdate, MemoryRead, MemorySearchResult
 from backend.app.memory.service import memory_service
 
 router = APIRouter(prefix="/api/memories", tags=["Memory"])
@@ -42,6 +42,19 @@ def search_memories(
         }
         for item in results
     ]
+
+@router.patch("/{memory_id}", response_model=MemoryRead)
+def update_memory(memory_id: str, payload: MemoryUpdate, db: Session = Depends(get_db)):
+    repo = LifedRepository(db)
+    mem = memory_service.update_memory(
+        repo=repo,
+        memory_id=memory_id,
+        content=payload.content,
+        memory_type=payload.type
+    )
+    if not mem:
+        raise HTTPException(status_code=404, detail="Memory not found")
+    return mem
 
 @router.delete("/{memory_id}")
 def delete_memory(memory_id: str, db: Session = Depends(get_db)):

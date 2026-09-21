@@ -1,4 +1,4 @@
-﻿import json
+import json
 from typing import List, Dict, Any, Optional
 from backend.app.storage.repository import LifedRepository
 from backend.app.memory.embeddings import embedding_engine
@@ -41,5 +41,16 @@ class MemoryService:
 
         scored_results.sort(key=lambda x: x["similarity"], reverse=True)
         return scored_results[:top_k]
+
+    @staticmethod
+    def update_memory(repo: LifedRepository, memory_id: str, content: Optional[str] = None, memory_type: Optional[str] = None) -> Optional[Memory]:
+        update_data: Dict[str, Any] = {}
+        if memory_type is not None:
+            update_data["type"] = memory_type
+        if content is not None:
+            update_data["content"] = content
+            vector = embedding_engine.embed_text(content)
+            update_data["embedding"] = json.dumps(vector)
+        return repo.update_memory(memory_id, **update_data)
 
 memory_service = MemoryService()

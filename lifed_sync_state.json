@@ -1,0 +1,25 @@
+{
+  "last_synced": "2026-09-21T15:12:57.006855",
+  "quote_config": {
+    "example_quote": "We suffer more often in imagination than in reality. — Seneca",
+    "quote_theme": "Stoic endurance and mental toughness"
+  },
+  "goals": [
+    {
+      "id": "111aeab4-4e0b-4067-b1a8-249c2080d6ce",
+      "title": "get a remote job",
+      "progress": 0.0,
+      "status": "active"
+    }
+  ],
+  "projects": [
+    {
+      "id": "002693f8-4bf6-49c0-81ba-f091e2691586",
+      "title": "make lifed version 3.0",
+      "status": "active",
+      "total_tasks": 0,
+      "completed_tasks": 0
+    }
+  ],
+  "tasks": []
+}

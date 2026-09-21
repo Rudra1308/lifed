@@ -70,6 +70,29 @@ export interface DailyPlan {
   created_at?: string;
 }
 
+export interface NotificationSettingsData {
+  enabled: boolean;
+  channel: "telegram" | "discord" | "whatsapp" | "email";
+  time: string;
+  telegram_bot_token?: string;
+  telegram_chat_id?: string;
+  discord_webhook_url?: string;
+  whatsapp_phone?: string;
+  whatsapp_apikey?: string;
+  webhook_url?: string;
+  email_to?: string;
+  smtp_host?: string;
+  smtp_port?: number;
+  smtp_user?: string;
+  smtp_pass?: string;
+  example_quote?: string;
+  quote_theme?: string;
+  include_tasks?: boolean;
+  include_projects?: boolean;
+  include_goals?: boolean;
+  include_quote?: boolean;
+}
+
 // Client helper with custom headers support
 export async function apiRequest<T>(
   endpoint: string,
@@ -162,10 +185,31 @@ export const api = {
     apiRequest<MemoryItem[]>(`/api/memories${type ? `?type=${type}` : ''}`),
   createMemory: (data: { content: string; type?: string }) =>
     apiRequest<MemoryItem>('/api/memories', { method: 'POST', body: JSON.stringify(data) }),
+  updateMemory: (id: string, data: Partial<MemoryItem>) =>
+    apiRequest<MemoryItem>(`/api/memories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   searchMemories: (query: string) =>
     apiRequest<{ memory: MemoryItem; similarity: number }[]>(`/api/memories/search?q=${encodeURIComponent(query)}`),
   deleteMemory: (id: string) =>
     apiRequest<{ success: boolean }>(`/api/memories/${id}`, { method: 'DELETE' }),
+
+  // Notifications & Morning Digest
+  getNotificationSettings: () =>
+    apiRequest<NotificationSettingsData>('/api/notifications/settings'),
+  updateNotificationSettings: (data: Partial<NotificationSettingsData>) =>
+    apiRequest<NotificationSettingsData>('/api/notifications/settings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  sendTestNotification: (channel?: string) =>
+    apiRequest<{ success: boolean; detail: any }>('/api/notifications/test', {
+      method: 'POST',
+      body: JSON.stringify({ channel }),
+    }),
+  previewMotivationalQuote: (params: { example_quote?: string; quote_theme?: string }) =>
+    apiRequest<{ quote: string }>('/api/notifications/preview-quote', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    }),
 
   // Dashboard & Plan
   getDashboard: () => apiRequest<any>('/api/dashboard'),

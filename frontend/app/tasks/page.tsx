@@ -14,7 +14,7 @@ import {
   Plus,
   Trash2,
   Calendar,
-  Filter,
+  Pencil,
 } from "lucide-react";
 import { api, TaskItem, Project } from "@/lib/api";
 
@@ -31,6 +31,18 @@ export default function TasksPage() {
   const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
   const [duration, setDuration] = useState(30);
   const [deadline, setDeadline] = useState("");
+  const [notes, setNotes] = useState("");
+
+  // Edit task form state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editProjectId, setEditProjectId] = useState("");
+  const [editPriority, setEditPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
+  const [editDuration, setEditDuration] = useState(30);
+  const [editDeadline, setEditDeadline] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editStatus, setEditStatus] = useState<"todo" | "in_progress" | "completed">("todo");
 
   const loadTasks = async () => {
     try {
@@ -57,9 +69,12 @@ export default function TasksPage() {
         priority,
         estimated_duration: duration,
         deadline: deadline || undefined,
+        notes: notes || undefined,
       });
       setTitle("");
       setDeadline("");
+      setNotes("");
+      setProjectId("");
       setIsModalOpen(false);
       await loadTasks();
     } catch {
@@ -71,11 +86,65 @@ export default function TasksPage() {
         priority,
         estimated_duration: duration,
         deadline: deadline || undefined,
+        notes: notes || undefined,
         status: "todo",
       };
       setTasks((prev) => [newTask, ...prev]);
       setTitle("");
+      setDeadline("");
+      setNotes("");
+      setProjectId("");
       setIsModalOpen(false);
+    }
+  };
+
+  const openEditModal = (task: TaskItem) => {
+    setEditingTask(task);
+    setEditTitle(task.title);
+    setEditProjectId(task.project_id || "");
+    setEditPriority(task.priority || "medium");
+    setEditDuration(task.estimated_duration || 30);
+    setEditDeadline(task.deadline || "");
+    setEditNotes(task.notes || "");
+    setEditStatus(task.status);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask || !editTitle.trim()) return;
+    try {
+      await api.updateTask(editingTask.id, {
+        title: editTitle.trim(),
+        project_id: editProjectId || undefined,
+        priority: editPriority,
+        estimated_duration: editDuration,
+        deadline: editDeadline || undefined,
+        notes: editNotes || undefined,
+        status: editStatus,
+      });
+      setIsEditModalOpen(false);
+      setEditingTask(null);
+      await loadTasks();
+    } catch {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === editingTask.id
+            ? {
+                ...t,
+                title: editTitle.trim(),
+                project_id: editProjectId || undefined,
+                priority: editPriority,
+                estimated_duration: editDuration,
+                deadline: editDeadline || undefined,
+                notes: editNotes || undefined,
+                status: editStatus,
+              }
+            : t
+        )
+      );
+      setIsEditModalOpen(false);
+      setEditingTask(null);
     }
   };
 
@@ -175,6 +244,7 @@ export default function TasksPage() {
                       <button
                         onClick={() => toggleTaskStatus(task)}
                         className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                        title={isDone ? "Mark as Incomplete" : "Mark as Completed"}
                       >
                         {isDone ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -201,7 +271,7 @@ export default function TasksPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3 shrink-0">
+                    <div className="flex items-center space-x-2.5 shrink-0">
                       {task.estimated_duration && (
                         <span className="hidden sm:flex items-center text-xs font-mono text-muted-foreground">
                           <Clock className="w-3.5 h-3.5 mr-1" />
@@ -221,6 +291,16 @@ export default function TasksPage() {
                         {task.priority.toUpperCase()}
                       </Badge>
 
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => openEditModal(task)}
+                        className="text-muted-foreground/60 hover:text-primary transition-colors p-1"
+                        title="Edit Task"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Delete Button */}
                       <button
                         onClick={() => deleteTask(task.id)}
                         className="text-muted-foreground/60 hover:text-rose-500 transition-colors p-1"
@@ -262,6 +342,24 @@ export default function TasksPage() {
               onChange={(e) => setTitle(e.target.value)}
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+              Project (Optional)
+            </label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full h-9 rounded-md border border-border/70 bg-background/50 px-3 text-xs font-mono"
+            >
+              <option value="">No Linked Project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -306,12 +404,150 @@ export default function TasksPage() {
             />
           </div>
 
+          <div>
+            <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+              Notes (Optional)
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Additional context or checklist items..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full rounded-md border border-border/70 bg-background/50 p-2 text-xs font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+
           <div className="flex justify-end space-x-2 pt-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" size="sm">
               Create Task
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Task Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Task"
+        description="Update title, priority, estimated duration, or completion status."
+      >
+        <form onSubmit={handleUpdateTask} className="space-y-4">
+          <div>
+            <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+              Task Title
+            </label>
+            <Input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+                Status
+              </label>
+              <select
+                value={editStatus}
+                onChange={(e: any) => setEditStatus(e.target.value)}
+                className="w-full h-9 rounded-md border border-border/70 bg-background/50 px-3 text-xs font-mono"
+              >
+                <option value="todo">TODO</option>
+                <option value="in_progress">IN PROGRESS</option>
+                <option value="completed">COMPLETED</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+                Priority
+              </label>
+              <select
+                value={editPriority}
+                onChange={(e: any) => setEditPriority(e.target.value)}
+                className="w-full h-9 rounded-md border border-border/70 bg-background/50 px-3 text-xs font-mono"
+              >
+                <option value="low">LOW</option>
+                <option value="medium">MEDIUM</option>
+                <option value="high">HIGH</option>
+                <option value="urgent">URGENT</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+              Project (Optional)
+            </label>
+            <select
+              value={editProjectId}
+              onChange={(e) => setEditProjectId(e.target.value)}
+              className="w-full h-9 rounded-md border border-border/70 bg-background/50 px-3 text-xs font-mono"
+            >
+              <option value="">No Linked Project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+                Duration (min)
+              </label>
+              <Input
+                type="number"
+                min={5}
+                step={5}
+                value={editDuration}
+                onChange={(e) => setEditDuration(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+                Deadline (Optional)
+              </label>
+              <Input
+                type="date"
+                value={editDeadline}
+                onChange={(e) => setEditDeadline(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-muted-foreground uppercase mb-1">
+              Notes (Optional)
+            </label>
+            <textarea
+              rows={2}
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              className="w-full rounded-md border border-border/70 bg-background/50 p-2 text-xs font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Save Changes
             </Button>
           </div>
         </form>
