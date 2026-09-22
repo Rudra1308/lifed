@@ -1,25 +1,42 @@
 {
-  "last_synced": "2026-09-21T15:12:57.006855",
+  "last_synced": "2026-09-22T16:04:47.407729",
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
-    "quote_theme": "Stoic endurance and mental toughness"
+    "quote_theme": "Stoic endurance and mental toughness",
+    "custom_model": "anthropic/claude-3.5-sonnet"
   },
+  "quote_history": [],
   "goals": [
     {
-      "id": "111aeab4-4e0b-4067-b1a8-249c2080d6ce",
-      "title": "get a remote job",
+      "id": "80522ae2-86b7-453c-a00e-f5c14fc91b42",
+      "title": "write assignments.",
+      "progress": 0.0,
+      "status": "active"
+    },
+    {
+      "id": "82f9f6c2-90b3-4ce3-b6c9-097c617db5a3",
+      "title": "get more reach on linkedin",
       "progress": 0.0,
       "status": "active"
     }
   ],
   "projects": [
     {
-      "id": "002693f8-4bf6-49c0-81ba-f091e2691586",
-      "title": "make lifed version 3.0",
+      "id": "231fe7fd-d2fb-41fb-9091-5b4304626f2d",
+      "title": "invedge ai",
       "status": "active",
-      "total_tasks": 0,
+      "total_tasks": 1,
       "completed_tasks": 0
     }
   ],
-  "tasks": []
+  "tasks": [
+    {
+      "id": "14e1a686-5449-4b4c-ad79-b6bd24fa018c",
+      "title": "work on invedge ai",
+      "priority": "high",
+      "estimated_duration": 30,
+      "deadline": "2026-11-08",
+      "status": "todo"
+    }
+  ]
 }
