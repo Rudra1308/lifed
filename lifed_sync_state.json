@@ -1,41 +1,28 @@
 {
-  "last_synced": "2026-09-22T16:04:47.407729",
+  "last_synced": "2026-09-22T16:05:13.531752",
   "quote_config": {
-    "example_quote": "We suffer more often in imagination than in reality. — Seneca",
-    "quote_theme": "Stoic endurance and mental toughness",
+    "example_quote": "The impediment to action advances action. What stands in the way becomes the way. — Marcus Aurelius",
+    "quote_theme": "Stoic resilience, focus, and relentless momentum",
     "custom_model": "anthropic/claude-3.5-sonnet"
   },
   "quote_history": [],
-  "goals": [
-    {
-      "id": "80522ae2-86b7-453c-a00e-f5c14fc91b42",
-      "title": "write assignments.",
-      "progress": 0.0,
-      "status": "active"
-    },
-    {
-      "id": "82f9f6c2-90b3-4ce3-b6c9-097c617db5a3",
-      "title": "get more reach on linkedin",
-      "progress": 0.0,
-      "status": "active"
-    }
-  ],
-  "projects": [
-    {
-      "id": "231fe7fd-d2fb-41fb-9091-5b4304626f2d",
-      "title": "invedge ai",
-      "status": "active",
-      "total_tasks": 1,
-      "completed_tasks": 0
-    }
-  ],
+  "goals": [],
+  "projects": [],
   "tasks": [
     {
-      "id": "14e1a686-5449-4b4c-ad79-b6bd24fa018c",
-      "title": "work on invedge ai",
-      "priority": "high",
+      "id": "1464c98a-a6b8-4577-89ee-df8bed35054e",
+      "title": "Implement Kinetic Matrix",
+      "priority": "urgent",
+      "estimated_duration": 45,
+      "deadline": null,
+      "status": "todo"
+    },
+    {
+      "id": "6cbd8001-4185-4a3b-8524-65a2bd2a9168",
+      "title": "Draft Architecture Diagram",
+      "priority": "medium",
       "estimated_duration": 30,
-      "deadline": "2026-11-08",
+      "deadline": null,
       "status": "todo"
     }
   ]
