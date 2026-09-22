@@ -2,47 +2,50 @@
 Lifed Cloud Morning Brief Runner
 Runs directly inside GitHub Actions (or any cloud cron) without requiring a local database.
 Reads state from lifed_sync_state.json and environment secrets.
+Guarantees a fresh, non-repeating quote every single day using 100+ curated quotes
+and AI anti-repetition negative prompting.
 """
 import os
 import json
-import random
 import asyncio
 from datetime import datetime
 from pathlib import Path
+from typing import List, Optional
 import httpx
 
-FALLBACK_QUOTES = [
-    '"The impediment to action advances action. What stands in the way becomes the way." — Marcus Aurelius',
-    '"We suffer more often in imagination than in reality." — Seneca',
-    '"The man who loves walking will walk further than the man who loves the destination."',
-    '"Discipline is choosing between what you want now and what you want most." — Abraham Lincoln',
-    '"Concentrate all your thoughts upon the work in hand." — Alexander Graham Bell',
-    '"First say to yourself what you would be; and then do what you have to do." — Epictetus',
-]
+from backend.app.notifications.quotes_bank import (
+    get_deterministic_daily_quote,
+    build_ai_quote_prompt,
+    CURATED_QUOTES
+)
 
-async def generate_quote(example_quote: str, theme: str, gemini_key: str, openrouter_key: str) -> str:
-    prompt = (
-        f"You are a master philosophical advisor and performance coach.\n"
-        f"The user loves this example quote:\n\"{example_quote}\"\n"
-        f"Their desired theme/philosophy is: \"{theme}\".\n\n"
-        f"Instructions:\n"
-        f"1. Generate a single, punchy, profound motivational quote in the EXACT SAME stylistic cadence, tone, and spirit.\n"
-        f"2. Keep it under 2 sentences.\n"
-        f"3. Return ONLY the quote text (wrapped in quotes), with an optional concise attribution if fictional/historical. No other conversational words."
+
+async def generate_quote(
+    example_quote: str,
+    theme: str,
+    gemini_key: str,
+    openrouter_key: str,
+    recent_quotes: Optional[List[str]] = None,
+    custom_model: Optional[str] = None
+) -> str:
+    prompt = build_ai_quote_prompt(
+        example_quote=example_quote,
+        base_theme=theme,
+        recent_quotes=recent_quotes
     )
 
-    # Try Gemini if key available
+    # 1. Try Gemini if key available
     if gemini_key:
         try:
             async with httpx.AsyncClient(timeout=12.0) as client:
                 res = await client.post(
                     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-                    headers={"Authorization": f"Bearer {gemini_key}", "Content-Type": "application/json"},
+                    headers={"Authorization": f"Bearer {gemini_key.strip()}", "Content-Type": "application/json"},
                     json={
                         "model": "gemini-2.0-flash",
                         "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.7,
-                        "max_tokens": 100,
+                        "temperature": 0.85,
+                        "max_tokens": 120,
                     }
                 )
                 if res.status_code == 200:
@@ -53,18 +56,24 @@ async def generate_quote(example_quote: str, theme: str, gemini_key: str, openro
         except Exception as e:
             print(f"[CLOUD LOG] Gemini quote generation skipped: {e}")
 
-    # Try OpenRouter if key available
+    # 2. Try OpenRouter if key available
     if openrouter_key:
+        model_to_use = custom_model or "google/gemini-2.0-flash-exp:free"
         try:
             async with httpx.AsyncClient(timeout=12.0) as client:
                 res = await client.post(
                     "https://openrouter.ai/api/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {openrouter_key}", "Content-Type": "application/json"},
+                    headers={
+                        "Authorization": f"Bearer {openrouter_key.strip()}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://github.com/Rudra1308/lifed",
+                        "X-Title": "Lifed Cloud Morning Brief"
+                    },
                     json={
-                        "model": "google/gemini-2.0-flash-exp:free",
+                        "model": model_to_use,
                         "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.7,
-                        "max_tokens": 100,
+                        "temperature": 0.85,
+                        "max_tokens": 120,
                     }
                 )
                 if res.status_code == 200:
@@ -75,7 +84,8 @@ async def generate_quote(example_quote: str, theme: str, gemini_key: str, openro
         except Exception as e:
             print(f"[CLOUD LOG] OpenRouter quote generation skipped: {e}")
 
-    return random.choice(FALLBACK_QUOTES)
+    # 3. Deterministic Non-Repeating Curated Bank
+    return get_deterministic_daily_quote(history=recent_quotes)
 
 
 async def main():
@@ -101,9 +111,28 @@ async def main():
     quote_config = state.get("quote_config", {})
     example_quote = quote_config.get("example_quote", "The impediment to action advances action. What stands in the way becomes the way.")
     quote_theme = quote_config.get("quote_theme", "Stoic resilience, focus, and relentless momentum")
+    custom_model = quote_config.get("custom_model")
+    recent_quotes = state.get("quote_history", [])
 
     today_str = datetime.now().strftime("%A, %B %d, %Y")
-    quote = await generate_quote(example_quote, quote_theme, gemini_key, openrouter_key)
+    quote = await generate_quote(
+        example_quote=example_quote,
+        theme=quote_theme,
+        gemini_key=gemini_key,
+        openrouter_key=openrouter_key,
+        recent_quotes=recent_quotes,
+        custom_model=custom_model
+    )
+
+    # Update quote history in state
+    if quote not in recent_quotes:
+        recent_quotes.append(quote)
+        state["quote_history"] = recent_quotes[-30:]
+        try:
+            with open(sync_file, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"[CLOUD LOG] Could not save updated quote history: {e}")
 
     # Format goals
     goals = state.get("goals", [])
@@ -157,6 +186,7 @@ async def main():
                 print("[SUCCESS] Morning brief dispatched as plain text!")
             else:
                 print(f"[ERROR] Failed to send Telegram message: {res2.text}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

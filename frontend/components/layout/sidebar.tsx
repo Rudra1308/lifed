@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -63,8 +64,15 @@ export function Sidebar() {
         {/* Brand identity */}
         <div className="flex h-16 items-center px-6 border-b border-border/60">
           <Link href="/" className="flex items-center space-x-2.5 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-mono font-bold text-base shadow-sm group-hover:scale-105 transition-transform">
-              L
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-white p-0.5 shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="Lifed Logo"
+                width={26}
+                height={26}
+                className="object-contain"
+                priority
+              />
             </div>
             <div>
               <span className="font-bold tracking-tight text-foreground text-lg">Lifed</span>

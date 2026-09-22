@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.app.database import get_db
 from backend.app.storage.repository import LifedRepository
+from backend.app.storage.sync import schedule_auto_sync_and_push
 from backend.app.schemas.schemas import (
     NotificationSettings,
     NotificationSettingsUpdate,
@@ -101,6 +102,7 @@ def update_notification_settings(payload: NotificationSettingsUpdate, db: Sessio
         prefs_update["include_quote"] = payload.include_quote
 
     repo.update_user_settings(preferences=prefs_update)
+    schedule_auto_sync_and_push(repo)
     return get_notification_settings(db)
 
 @router.post("/preview-quote")

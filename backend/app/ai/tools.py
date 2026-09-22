@@ -109,6 +109,60 @@ LIFED_TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "create_project",
+            "description": "Create a new project/initiative in Lifed.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "description": "Title of the project."},
+                    "description": {"type": "string", "description": "Description of the project scope."},
+                    "goal_id": {"type": "string", "description": "Optional linked strategic goal ID."}
+                },
+                "required": ["title"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_projects",
+            "description": "Retrieve projects from Lifed, optionally filtered by status.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["active", "completed", "on_hold"],
+                        "description": "Filter by project completion status."
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_project",
+            "description": "Update an existing project's status (e.g. mark completed/accomplished or active), title, or description.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "The unique ID or title of the project to update."},
+                    "status": {
+                        "type": "string",
+                        "enum": ["active", "completed", "on_hold"],
+                        "description": "New status for the project (e.g. 'completed' to mark done, 'active' to reopen)."
+                    },
+                    "title": {"type": "string", "description": "New title for the project."},
+                    "description": {"type": "string", "description": "New description."}
+                },
+                "required": ["project_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "save_memory",
             "description": "Persist a durable user memory, preference, working style rule, or key biographical fact.",
             "parameters": {
@@ -186,18 +240,72 @@ def execute_tool(name: str, args: Dict[str, Any], repo: LifedRepository) -> Dict
             }
 
         elif name == "update_task":
+            task_id = args["task_id"]
+            task = repo.get_task_by_id(task_id)
+            if not task:
+                for t in repo.get_tasks():
+                    if task_id.lower() in t.title.lower() or t.title.lower() in task_id.lower():
+                        task = t
+                        break
+            if not task:
+                return {"success": False, "error": f"Task '{task_id}' not found."}
             task = repo.update_task(
-                task_id=args["task_id"],
+                task_id=task.id,
                 status=args.get("status"),
                 priority=args.get("priority"),
                 deadline=args.get("deadline")
             )
-            if not task:
-                return {"success": False, "error": f"Task with ID {args['task_id']} not found."}
             return {
                 "success": True,
                 "message": f"Task '{task.title}' updated.",
                 "task": {"id": task.id, "status": task.status, "priority": task.priority}
+            }
+
+        elif name == "create_project":
+            proj = repo.create_project(
+                title=args["title"],
+                description=args.get("description"),
+                goal_id=args.get("goal_id")
+            )
+            return {
+                "success": True,
+                "message": f"Project '{proj.title}' created.",
+                "project": {"id": proj.id, "title": proj.title, "status": proj.status}
+            }
+
+        elif name == "get_projects":
+            projs = repo.get_projects(status=args.get("status"))
+            return {
+                "success": True,
+                "count": len(projs),
+                "projects": [{"id": p.id, "title": p.title, "status": p.status} for p in projs]
+            }
+
+        elif name == "update_project":
+            proj_id = args["project_id"]
+            proj = repo.get_project_by_id(proj_id)
+            if not proj:
+                # Find by title substring
+                for p in repo.get_projects():
+                    if proj_id.lower() in p.title.lower() or p.title.lower() in proj_id.lower():
+                        proj = p
+                        break
+            if not proj:
+                return {"success": False, "error": f"Project '{proj_id}' not found."}
+
+            update_kw = {}
+            if "status" in args and args["status"]:
+                update_kw["status"] = args["status"]
+            if "title" in args and args["title"]:
+                update_kw["title"] = args["title"]
+            if "description" in args and args["description"]:
+                update_kw["description"] = args["description"]
+
+            updated = repo.update_project(proj.id, **update_kw)
+            return {
+                "success": True,
+                "message": f"Project '{updated.title}' updated to status '{updated.status}'.",
+                "project": {"id": updated.id, "title": updated.title, "status": updated.status}
             }
 
         elif name == "create_goal":

@@ -16,6 +16,7 @@ from backend.app.routers import (
     plan,
     voice,
     notifications,
+    sync,
 )
 from backend.app.notifications.scheduler import morning_scheduler_loop, stop_scheduler
 from backend.app.notifications.telegram_bot import telegram_bot_polling_loop, stop_telegram_bot
@@ -60,6 +61,7 @@ app.include_router(memories.router)
 app.include_router(plan.router)
 app.include_router(voice.router)
 app.include_router(notifications.router)
+app.include_router(sync.router)
 
 @app.get("/")
 def root():

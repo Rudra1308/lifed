@@ -7,7 +7,7 @@ import httpx
 
 from backend.app.database import SessionLocal
 from backend.app.storage.repository import LifedRepository
-from backend.app.storage.sync import export_sync_state
+from backend.app.storage.sync import schedule_auto_sync_and_push
 from backend.app.notifications.engine import build_morning_digest, generate_personalized_quote, send_telegram
 from backend.app.ai.hybrid_orchestrator import HybridOrchestrator
 
@@ -35,6 +35,80 @@ HELP_MESSAGE = (
 )
 
 
+
+
+def _complete_matching_item(query: str, repo: LifedRepository) -> str:
+    """Find and mark completed any matching task or project."""
+    cleaned = query.strip()
+    lower = cleaned.lower()
+
+    # Strip prefixes/suffixes
+    for word in ["project", "task", "mark", "as", "completed", "complete", "done", "accomplished", "the"]:
+        # Match standalone words
+        import re
+        lower = re.sub(rf"\b{word}\b", " ", lower).strip()
+
+    all_projects = repo.get_projects(status="active")
+    all_tasks = [t for t in repo.get_tasks() if t.status != "completed"]
+
+    # If query is empty and there is only 1 active project, complete it
+    if not lower and len(all_projects) == 1:
+        p = all_projects[0]
+        repo.update_project(p.id, status="completed")
+        schedule_auto_sync_and_push(repo)
+        return f"✅ *Accomplished!* Project *'{p.title}'* has been marked as completed."
+
+    # If numeric (e.g. "1" or "2"), match against pending tasks
+    if lower.isdigit():
+        idx = int(lower) - 1
+        priority_order = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
+        all_tasks.sort(key=lambda t: priority_order.get(t.priority.lower(), 2))
+        if 0 <= idx < len(all_tasks):
+            task = all_tasks[idx]
+            repo.update_task(task.id, status="completed")
+            schedule_auto_sync_and_push(repo)
+            return f"✅ Task *'{task.title}'* marked as completed!"
+
+    # 1. Search projects by title substring or words
+    if lower:
+        for p in all_projects:
+            p_lower = p.title.lower()
+            if lower in p_lower or p_lower in lower:
+                repo.update_project(p.id, status="completed")
+                schedule_auto_sync_and_push(repo)
+                return f"✅ *Accomplished!* Project *'{p.title}'* has been marked as completed."
+
+        # Word overlap match (e.g. "lifed version 3.0" in "make lifed version 3.0")
+        query_words = set(w for w in lower.split() if len(w) > 1)
+        if query_words:
+            for p in all_projects:
+                p_words = set(w for w in p.title.lower().split() if len(w) > 1)
+                if query_words.issubset(p_words) or len(query_words.intersection(p_words)) >= 2:
+                    repo.update_project(p.id, status="completed")
+                    schedule_auto_sync_and_push(repo)
+                    return f"✅ *Accomplished!* Project *'{p.title}'* has been marked as completed."
+
+    # 2. Search tasks by title substring or words
+    if lower:
+        for t in all_tasks:
+            t_lower = t.title.lower()
+            if lower in t_lower or t_lower in lower:
+                repo.update_task(t.id, status="completed")
+                schedule_auto_sync_and_push(repo)
+                return f"✅ Task *'{t.title}'* marked as completed!"
+
+        query_words = set(w for w in lower.split() if len(w) > 1)
+        if query_words:
+            for t in all_tasks:
+                t_words = set(w for w in t.title.lower().split() if len(w) > 1)
+                if query_words.issubset(t_words) or len(query_words.intersection(t_words)) >= 2:
+                    repo.update_task(t.id, status="completed")
+                    schedule_auto_sync_and_push(repo)
+                    return f"✅ Task *'{t.title}'* marked as completed!"
+
+    return f"❓ Could not find any active task or project matching *'{cleaned or query}'*.\nUse `/tasks` or `/projects` to see active items."
+
+
 async def handle_telegram_command(
     text: str,
     repo: LifedRepository,
@@ -46,17 +120,17 @@ async def handle_telegram_command(
     lower = cleaned.lower()
 
     # 1. Help & Start
-    if lower in ["/start", "/help", "help"]:
+    if lower in ["/start", "/help", "help", "/commands", "commands"]:
         return HELP_MESSAGE
 
     # 2. View Tasks
-    elif lower in ["/tasks", "/todo", "tasks", "todo"]:
+    elif lower in ["/tasks", "/todo", "tasks", "todo", "/task"]:
         tasks = [t for t in repo.get_tasks() if t.status != "completed"]
         priority_order = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
         tasks.sort(key=lambda t: priority_order.get(t.priority.lower(), 2))
 
         if not tasks:
-            return "✨ *Zero pending tasks!* All caught up. Use `/task <title>` or text me to add new work."
+            return "✨ *Zero pending tasks!* All caught up. Use `/add <title>` to create new work."
 
         lines = [f"📋 *Pending Tasks ({len(tasks)} items):*\n"]
         for idx, t in enumerate(tasks, 1):
@@ -69,11 +143,11 @@ async def handle_telegram_command(
         return "\n".join(lines)
 
     # 3. View Projects
-    elif lower in ["/projects", "projects"]:
+    elif lower in ["/projects", "projects", "/project"]:
         projects = repo.get_projects(status="active")
         tasks = repo.get_tasks()
         if not projects:
-            return "📁 No active projects currently. Add one in the app or tell me: _'Create project <name>'_."
+            return "📁 No active projects currently. Add one in the app or send: _'create project <name>'_."
 
         lines = [f"📁 *Active Initiatives ({len(projects)}):*\n"]
         for p in projects:
@@ -82,11 +156,11 @@ async def handle_telegram_command(
             pct = int(round((len(done_tasks) / len(p_tasks)) * 100)) if p_tasks else 0
             lines.append(f"• *{p.title}* — {pct}% ({len(done_tasks)}/{len(p_tasks)} tasks done)")
 
-        lines.append("\n💡 _Tip: Reply `/done <project name>` to mark a project completed._")
+        lines.append("\n💡 _Tip: Reply `/done <project name>` or `/project complete <name>` to mark a project completed._")
         return "\n".join(lines)
 
     # 4. View Goals
-    elif lower in ["/goals", "goals"]:
+    elif lower in ["/goals", "goals", "/goal"]:
         goals = repo.get_goals(status="active")
         if not goals:
             return "🎯 No active goals defined yet."
@@ -96,53 +170,81 @@ async def handle_telegram_command(
             lines.append(f"• *{g.title}* — {int(round(g.progress or 0))}%")
         return "\n".join(lines)
 
-    # 5. Quick Done
-    elif lower.startswith("/done ") or lower.startswith("done "):
-        query = cleaned.split(" ", 1)[1].strip()
+    # 5. Project Subcommands (/project complete ..., /project add ...)
+    elif lower.startswith("/project ") or lower.startswith("project "):
+        cmd_rest = cleaned.split(" ", 1)[1].strip()
+        cmd_lower = cmd_rest.lower()
 
-        # Check if query matches a project
-        all_projects = repo.get_projects()
-        for p in all_projects:
-            if query.lower() in p.title.lower() or query == p.id:
-                repo.update_project(p.id, status="completed")
-                export_sync_state(repo)
-                return f"✅ *Accomplished!* Project *'{p.title}'* marked as completed."
+        if cmd_lower.startswith("complete") or cmd_lower.startswith("done"):
+            query = cmd_rest.split(" ", 1)[1].strip() if " " in cmd_rest else ""
+            return _complete_matching_item(query, repo)
+        elif cmd_lower.startswith("add ") or cmd_lower.startswith("create "):
+            title = cmd_rest.split(" ", 1)[1].strip()
+            proj = repo.create_project(title=title)
+            schedule_auto_sync_and_push(repo)
+            return f"📁 *Created project:* *'{proj.title}'*."
+        else:
+            return _complete_matching_item(cmd_rest, repo)
 
-        # Check if query matches a task
-        all_tasks = repo.get_tasks()
-        # If numeric (e.g. "/done 1")
-        if query.isdigit():
-            idx = int(query) - 1
-            pending = [t for t in all_tasks if t.status != "completed"]
-            priority_order = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
-            pending.sort(key=lambda t: priority_order.get(t.priority.lower(), 2))
-            if 0 <= idx < len(pending):
-                task = pending[idx]
-                repo.update_task(task.id, status="completed")
-                export_sync_state(repo)
-                return f"✅ Task *'{task.title}'* marked as completed!"
+    # 6. Task Subcommands (/task add ..., /task complete ...)
+    elif lower.startswith("/task ") or lower.startswith("task "):
+        cmd_rest = cleaned.split(" ", 1)[1].strip()
+        cmd_lower = cmd_rest.lower()
 
-        for t in all_tasks:
-            if query.lower() in t.title.lower() or query == t.id:
-                repo.update_task(t.id, status="completed")
-                export_sync_state(repo)
-                return f"✅ Task *'{t.title}'* marked as completed!"
+        if cmd_lower.startswith("complete") or cmd_lower.startswith("done"):
+            query = cmd_rest.split(" ", 1)[1].strip() if " " in cmd_rest else ""
+            return _complete_matching_item(query, repo)
+        elif cmd_lower.startswith("add ") or cmd_lower.startswith("create "):
+            title = cmd_rest.split(" ", 1)[1].strip()
+            task = repo.create_task(title=title, priority="medium", estimated_duration=30)
+            schedule_auto_sync_and_push(repo)
+            return f"✅ Created task: *{task.title}* (Medium priority, ~30m)."
+        else:
+            # Assume /task <title> is adding a task
+            task = repo.create_task(title=cmd_rest, priority="medium", estimated_duration=30)
+            schedule_auto_sync_and_push(repo)
+            return f"✅ Created task: *{task.title}* (Medium priority, ~30m)."
 
-        return f"❓ Could not find any active task or project matching *'{query}'*."
-
-    # 6. Quick Task Create
-    elif lower.startswith("/task "):
+    # 7. Quick Add Task (/add <title>)
+    elif lower.startswith("/add ") or lower.startswith("add task "):
         title = cleaned.split(" ", 1)[1].strip()
+        if lower.startswith("add task "):
+            title = cleaned[len("add task "):].strip()
         task = repo.create_task(title=title, priority="medium", estimated_duration=30)
-        export_sync_state(repo)
+        schedule_auto_sync_and_push(repo)
         return f"✅ Created task: *{task.title}* (Medium priority, ~30m)."
 
-    # 7. Daily Brief
-    elif lower in ["/brief", "brief"]:
+    # 8. Completion Intent Matching:
+    # Matches:
+    # "mark lifed version 3.0 complete"
+    # "mark project lifed version 3.0 as completed"
+    # "/done ..."
+    # "done ..."
+    # "complete ..."
+    elif (
+        lower.startswith("mark ")
+        or lower.startswith("/done")
+        or lower.startswith("done ")
+        or lower.startswith("/complete")
+        or lower.startswith("complete ")
+        or lower.startswith("/finish")
+        or lower.startswith("finish ")
+        or " complete" in lower
+        or " completed" in lower
+        or " done" in lower
+    ):
+        result = _complete_matching_item(cleaned, repo)
+        if result and "❓" not in result:
+            return result
+        # If no direct match, allow AI to process below
+        pass
+
+    # 9. Daily Brief
+    if lower in ["/brief", "brief"]:
         digest = await build_morning_digest(repo)
         return digest["markdown"]
 
-    # 8. Motivational Quote
+    # 10. Motivational Quote
     elif lower in ["/quote", "quote"]:
         user = repo.get_default_user()
         prefs = json.loads(user.preferences) if user.preferences else {}
@@ -153,18 +255,25 @@ async def handle_telegram_command(
         )
         return f"💡 *Personalized Daily Quote:*\n{quote}"
 
-    # 9. Natural Language AI Assistant
-    else:
-        try:
-            orchestrator = HybridOrchestrator(repo)
-            result = await orchestrator.chat(cleaned)
-            # Sync state in case tools created or modified data
-            export_sync_state(repo)
-            reply = result.get("reply", "Action executed.")
-            return reply
-        except Exception as e:
-            logger.error(f"[TELEGRAM AI ERROR] {e}")
-            return f"⚠️ Error processing command: {e}"
+    # 11. Natural Language AI Assistant
+    try:
+        orchestrator = HybridOrchestrator(repo)
+        result = await orchestrator.chat(cleaned)
+        schedule_auto_sync_and_push(repo)
+        reply = result.get("reply", "")
+        tool_calls = result.get("tool_calls", [])
+        if tool_calls:
+            tool_msgs = []
+            for tc in tool_calls:
+                res = tc.get("result", {})
+                if isinstance(res, dict) and "message" in res:
+                    tool_msgs.append(res["message"])
+            if tool_msgs and (not reply or "Plan coordinated successfully" in reply):
+                return "✅ " + "\n".join(tool_msgs)
+        return reply or "Action executed successfully."
+    except Exception as e:
+        logger.error(f"[TELEGRAM AI ERROR] {e}")
+        return f"⚠️ Error processing command: {e}"
 
 
 async def telegram_bot_polling_loop():

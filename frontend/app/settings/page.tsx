@@ -18,8 +18,11 @@ import {
   Mail,
   Smartphone,
   Flame,
+  Cloud,
+  RefreshCw,
+  GitBranch,
 } from "lucide-react";
-import { api, SettingsData, NotificationSettingsData } from "@/lib/api";
+import { api, apiRequest, SettingsData, NotificationSettingsData } from "@/lib/api";
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
@@ -58,6 +61,16 @@ export default function SettingsPage() {
   const [previewingQuote, setPreviewingQuote] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
 
+  // Cloud Sync State
+  const [syncStatus, setSyncStatus] = useState<{
+    last_synced?: string;
+    last_pushed?: string;
+    status?: string;
+    error?: string;
+  } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
+
   const loadSettings = async () => {
     try {
       const data = await api.getSettings();
@@ -78,6 +91,41 @@ export default function SettingsPage() {
       }
     } catch {
       // Backend may be starting
+    }
+
+    try {
+      const sData = await apiRequest<{
+        last_synced?: string;
+        last_pushed?: string;
+        status?: string;
+        error?: string;
+      }>("/api/sync/status");
+      setSyncStatus(sData);
+    } catch {
+      // Backend may be starting
+    }
+  };
+
+  const handleManualSync = async () => {
+    setSyncing(true);
+    setSyncMessage("");
+    try {
+      const res = await apiRequest<{
+        last_synced?: string;
+        last_pushed?: string;
+        status?: string;
+        error?: string;
+      }>("/api/sync/push", { method: "POST" });
+      setSyncStatus(res);
+      if (res.status === "error") {
+        setSyncMessage(res.error || "Git push encountered an issue.");
+      } else {
+        setSyncMessage("Successfully exported and pushed snapshot to GitHub!");
+      }
+    } catch (err: any) {
+      setSyncMessage(err.message || "Failed to trigger cloud sync.");
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -607,6 +655,90 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* GitHub Cloud Sync & Automation Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Cloud className="w-5 h-5 text-primary" />
+                <CardTitle>GitHub Cloud Sync & Automation</CardTitle>
+              </div>
+              <Badge variant="success" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5 inline-block" />
+                Auto-Push Active
+              </Badge>
+            </div>
+            <CardDescription>
+              Automatically exports and pushes your tasks, projects, and goals snapshot to GitHub so cloud morning briefs stay 100% in sync when your laptop is turned off.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-3.5 rounded-lg border border-border/60 bg-secondary/15 space-y-2.5 font-mono text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-border/40">
+                <span className="text-muted-foreground flex items-center space-x-1.5">
+                  <GitBranch className="w-3.5 h-3.5 text-primary" />
+                  <span>Sync Target:</span>
+                </span>
+                <span className="text-foreground font-semibold">origin/main (lifed_sync_state.json)</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-border/40">
+                <span className="text-muted-foreground">Trigger Mechanism:</span>
+                <span className="text-foreground">Debounced Auto-Push (on any task/project/goal edit)</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-border/40">
+                <span className="text-muted-foreground">Anti-Repetition Quotes:</span>
+                <span className="text-emerald-400">Active (100+ quotes + AI Negative History)</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-border/40">
+                <span className="text-muted-foreground">Last Exported Locally:</span>
+                <span className="text-foreground">
+                  {syncStatus?.last_synced ? new Date(syncStatus.last_synced).toLocaleString() : "Never"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-muted-foreground">Last Pushed to GitHub:</span>
+                <span className="text-foreground">
+                  {syncStatus?.last_pushed ? new Date(syncStatus.last_pushed).toLocaleString() : "Pending next edit"}
+                </span>
+              </div>
+            </div>
+
+            {syncMessage && (
+              <div
+                className={`flex items-center space-x-2 text-xs font-mono p-3 rounded-lg border ${
+                  syncStatus?.status === "error"
+                    ? "border-rose-500/30 bg-rose-500/10 text-rose-500"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                }`}
+              >
+                {syncStatus?.status === "error" ? (
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                )}
+                <span>{syncMessage}</span>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <p className="text-[11px] font-mono text-muted-foreground">
+                💡 Pushes only <code>lifed_sync_state.json</code> so in-progress code files are never touched.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="text-xs font-mono"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${syncing ? "animate-spin text-primary" : ""}`} />
+                <span>{syncing ? "Pushing to GitHub..." : "Sync & Push to GitHub Now"}</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* OpenRouter AI Model Card */}
         <Card>
           <CardHeader>
@@ -657,10 +789,11 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2.5">
                   {[
-                    "anthropic/claude-3.5-sonnet",
-                    "google/gemini-2.0-flash-001",
+                    "google/gemini-2.5-flash",
+                    "google/gemini-3.5-flash",
                     "openai/gpt-4o-mini",
-                    "meta-llama/llama-3.3-70b-instruct",
+                    "anthropic/claude-3-haiku",
+                    "google/gemma-4-26b-a4b-it:free",
                   ].map((m) => (
                     <button
                       key={m}

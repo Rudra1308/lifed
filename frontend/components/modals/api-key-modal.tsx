@@ -373,9 +373,30 @@ export function ApiKeyModal({ isOpen, onClose, onKeySaved }: ApiKeyModalProps) {
                 type="text"
                 value={openrouterModel}
                 onChange={(e) => setOpenrouterModel(e.target.value)}
-                placeholder="anthropic/claude-3.5-sonnet"
+                placeholder="google/gemini-2.5-flash"
                 className="font-mono text-xs"
               />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {[
+                  "google/gemini-2.5-flash",
+                  "openai/gpt-4o-mini",
+                  "anthropic/claude-3-haiku",
+                  "google/gemma-4-26b-a4b-it:free",
+                ].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setOpenrouterModel(m)}
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                      openrouterModel === m
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border/60 hover:bg-accent text-muted-foreground"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

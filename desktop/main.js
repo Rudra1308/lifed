@@ -46,7 +46,7 @@ async function startBackend() {
   }
 
   console.log("[Desktop] Spawning Python FastAPI backend...");
-  backendProcess = spawn("python", ["-m", "uvicorn", "backend.app.main:app", "--port", String(BACKEND_PORT)], {
+  backendProcess = spawn("python", ["-m", "uvicorn", "backend.app.main:app", "--port", String(BACKEND_PORT), "--reload"], {
     cwd: PROJECT_ROOT,
     shell: true,
     stdio: "inherit",
@@ -82,7 +82,10 @@ async function startFrontend() {
   });
 }
 function createMainWindow() {
-  const iconPath = path.join(__dirname, "assets", "icon.ico");
+  const iconPath = process.platform === "win32"
+    ? path.join(__dirname, "assets", "lifed.ico")
+    : path.join(__dirname, "assets", "icon.png");
+
   mainWindow = new BrowserWindow({
     width: 1380,
     height: 900,
@@ -98,6 +101,14 @@ function createMainWindow() {
     },
     show: false,
   });
+
+  if (process.platform === "win32") {
+    try {
+      mainWindow.setIcon(iconPath);
+    } catch (e) {
+      // fallback
+    }
+  }
 
   mainWindow.loadURL(`http://localhost:${FRONTEND_PORT}`);
 
@@ -115,6 +126,10 @@ function createMainWindow() {
 }
 
 function createQuickCaptureWindow() {
+  const iconPath = process.platform === "win32"
+    ? path.join(__dirname, "assets", "lifed.ico")
+    : path.join(__dirname, "assets", "icon.png");
+
   quickCaptureWindow = new BrowserWindow({
     width: 720,
     height: 320,
@@ -123,6 +138,7 @@ function createQuickCaptureWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
+    icon: iconPath,
     center: true,
     show: false,
     webPreferences: {

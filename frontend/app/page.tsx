@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import { Moon, Sun, ArrowRight, Bot, CheckSquare, Brain, CalendarCheck, Settings, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,8 +34,11 @@ export default function HomePage() {
     <div className="relative min-h-screen w-full flex flex-col justify-between items-center p-6 text-center select-none overflow-hidden">
       {/* Top Floating Controls */}
       <header className="w-full max-w-6xl flex items-center justify-between pointer-events-auto py-2">
-        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full border border-border/60 bg-card/70 backdrop-blur-md font-mono text-xs font-bold text-muted-foreground shadow-sm">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-full border border-border/60 bg-card/70 backdrop-blur-md font-mono text-xs font-bold text-muted-foreground shadow-sm">
+          <div className="h-5 w-5 rounded bg-white flex items-center justify-center p-0.5 overflow-hidden">
+            <Image src="/logo.png" alt="Lifed Logo" width={18} height={18} className="object-contain" />
+          </div>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="uppercase tracking-widest text-foreground font-bold">LIFED v2.0</span>
         </div>
 
@@ -66,7 +70,18 @@ export default function HomePage() {
 
       {/* Main Center Display: lifed in the Center of the Viewport */}
       <main className="my-auto flex flex-col items-center justify-center max-w-4xl mx-auto space-y-8 py-12">
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col items-center">
+          <div className="relative mb-2 flex h-24 w-24 md:h-28 md:w-28 items-center justify-center rounded-3xl bg-white border border-border/70 p-2.5 shadow-2xl backdrop-blur-xl group hover:scale-105 transition-transform overflow-hidden">
+            <Image
+              src="/logo.png"
+              alt="Lifed Brand Mark"
+              width={96}
+              height={96}
+              className="object-contain"
+              priority
+            />
+          </div>
+
           <h1 className="text-7xl sm:text-8xl md:text-9xl font-extrabold tracking-widest font-mono text-foreground uppercase drop-shadow-md">
             lifed<span className="animate-pulse text-primary font-bold">_</span>
           </h1>

@@ -24,6 +24,7 @@
     "appId": "com.lifed.commandcenter",
     "productName": "Lifed",
     "win": {
+      "icon": "assets/icon.ico",
       "signAndEditExecutable": false,
       "target": [
         "dir",

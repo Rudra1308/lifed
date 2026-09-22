@@ -1,6 +1,7 @@
 import httpx
 import json
 import logging
+import re
 from typing import List, Dict, Any, Optional
 from backend.app.config import settings
 from backend.app.storage.repository import LifedRepository
@@ -19,6 +20,73 @@ Operating Principles:
 2. Ground all recommendations in data and explain your rationale clearly and concisely.
 3. If the user expresses a preference or habit, retain it using save_memory.
 4. Keep your tone minimal, technical, clear, and proactive."""
+
+def match_deterministic_intent(text: str) -> Optional[tuple[str, Dict[str, Any]]]:
+    """Extract deterministic tool intent from direct natural language commands."""
+    raw = text.strip()
+    cleaned = raw.strip("\"' ")
+
+    # Goals:
+    # "i want you to add 'study for gate in my goal'"
+    # "add 'study for gate' to my goals"
+    # "add goal: study for gate"
+    # "create goal study for gate"
+    goal_patterns = [
+        r'(?:please\s+)?(?:i\s+want\s+you\s+to\s+)?(?:add|create|set)\s+(?:a\s+)?(?:new\s+)?goal(?:\s+called|\s+titled|\s*:|\s+to|\s+for)?\s*[\'"]?([^\'"]+)[\'"]?',
+        r'(?:please\s+)?(?:i\s+want\s+you\s+to\s+)?(?:add|put)\s+[\'"]?([^\'"]+?)[\'"]?\s+(?:in|to|into)\s+(?:my\s+)?(?:lifed\s+)?goals?',
+    ]
+    for pattern in goal_patterns:
+        m = re.search(pattern, cleaned, re.IGNORECASE)
+        if m:
+            title = m.group(1).strip().strip("\"' ")
+            title = re.sub(r'\s+(?:in|to|into)\s+(?:my\s+)?(?:lifed\s+)?goals?$', '', title, flags=re.IGNORECASE).strip()
+            if title:
+                return "create_goal", {"title": title}
+
+    # Tasks:
+    # "add task: study biology"
+    # "create task buy milk"
+    # "add 'finish presentation' to my tasks"
+    task_patterns = [
+        r'(?:please\s+)?(?:i\s+want\s+you\s+to\s+)?(?:add|create)\s+(?:a\s+)?(?:new\s+)?task(?:\s+called|\s+titled|\s*:|\s+to|\s+for)?\s*[\'"]?([^\'"]+)[\'"]?',
+        r'(?:please\s+)?(?:i\s+want\s+you\s+to\s+)?(?:add|put)\s+[\'"]?([^\'"]+?)[\'"]?\s+(?:in|to|into)\s+(?:my\s+)?(?:lifed\s+)?tasks?',
+    ]
+    for pattern in task_patterns:
+        m = re.search(pattern, cleaned, re.IGNORECASE)
+        if m:
+            title = m.group(1).strip().strip("\"' ")
+            title = re.sub(r'\s+(?:in|to|into)\s+(?:my\s+)?(?:lifed\s+)?tasks?$', '', title, flags=re.IGNORECASE).strip()
+            if title:
+                return "create_task", {"title": title, "priority": "medium", "estimated_duration": 30}
+
+    # Projects:
+    # "create project: Lifed 3.0"
+    # "add project Marketing Q4"
+    proj_patterns = [
+        r'(?:please\s+)?(?:i\s+want\s+you\s+to\s+)?(?:add|create)\s+(?:a\s+)?(?:new\s+)?project(?:\s+called|\s+titled|\s*:|\s+to|\s+for)?\s*[\'"]?([^\'"]+)[\'"]?',
+    ]
+    for pattern in proj_patterns:
+        m = re.search(pattern, cleaned, re.IGNORECASE)
+        if m:
+            title = m.group(1).strip().strip("\"' ")
+            if title:
+                return "create_project", {"title": title}
+
+    # Memories:
+    # "remember that I prefer technical work in the morning"
+    # "save memory: always use dark mode"
+    mem_patterns = [
+        r'(?:please\s+)?(?:remember\s+that|remember)\s+[\'"]?([^\'"]+)[\'"]?',
+        r'(?:please\s+)?(?:save\s+memory|save\s+preference)(?:\s*:)?\s*[\'"]?([^\'"]+)[\'"]?',
+    ]
+    for pattern in mem_patterns:
+        m = re.search(pattern, cleaned, re.IGNORECASE)
+        if m:
+            content = m.group(1).strip().strip("\"' ")
+            if content:
+                return "save_memory", {"content": content, "type": "preference"}
+
+    return None
 
 class HybridOrchestrator:
     def __init__(
@@ -116,7 +184,7 @@ class HybridOrchestrator:
         headers: Dict[str, str],
         model_name: str,
         client: httpx.AsyncClient
-    ) -> tuple[Optional[str], List[Dict[str, Any]]]:
+    ) -> tuple[Optional[str], List[Dict[str, Any]], Optional[str]]:
         """Execute standard OpenAI-compatible tool calling loop."""
         executed_tools = []
         payload = {
@@ -126,13 +194,26 @@ class HybridOrchestrator:
             "tool_choice": "auto"
         }
 
-        resp = await client.post(f"{base_url}/chat/completions", headers=headers, json=payload, timeout=60.0)
-        if resp.status_code != 200:
-            return None, executed_tools
+        try:
+            resp = await client.post(f"{base_url}/chat/completions", headers=headers, json=payload, timeout=45.0)
+        except Exception as e:
+            return None, executed_tools, f"Connection error: {e}"
 
-        data = resp.json()
-        choice = data["choices"][0]
-        message_obj = choice["message"]
+        if resp.status_code != 200:
+            err_detail = resp.text
+            try:
+                err_data = resp.json()
+                err_detail = err_data.get("error", {}).get("message", resp.text)
+            except Exception:
+                pass
+            return None, executed_tools, f"HTTP {resp.status_code}: {err_detail}"
+
+        try:
+            data = resp.json()
+            choice = data["choices"][0]
+            message_obj = choice["message"]
+        except Exception as e:
+            return None, executed_tools, f"Invalid model response: {e}"
 
         if message_obj.get("tool_calls"):
             messages.append(message_obj)
@@ -159,25 +240,42 @@ class HybridOrchestrator:
                     "content": json.dumps(result)
                 })
 
-            followup = await client.post(
-                f"{base_url}/chat/completions",
-                headers=headers,
-                json={"model": model_name, "messages": messages},
-                timeout=60.0
-            )
-            if followup.status_code == 200:
-                final_content = followup.json()["choices"][0]["message"].get("content", "")
-                return final_content, executed_tools
-            else:
-                return f"Executed tools: {', '.join([t['name'] for t in executed_tools])}", executed_tools
+            try:
+                followup = await client.post(
+                    f"{base_url}/chat/completions",
+                    headers=headers,
+                    json={"model": model_name, "messages": messages},
+                    timeout=45.0
+                )
+                if followup.status_code == 200:
+                    final_content = followup.json()["choices"][0]["message"].get("content", "")
+                    return final_content, executed_tools, None
+                else:
+                    return f"Executed tools: {', '.join([t['name'] for t in executed_tools])}", executed_tools, None
+            except Exception:
+                return f"Executed tools: {', '.join([t['name'] for t in executed_tools])}", executed_tools, None
 
-        return message_obj.get("content", ""), executed_tools
+        return message_obj.get("content", ""), executed_tools, None
 
     async def chat(self, user_message: str, history: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
         """Execute collaborative multi-agent chat session."""
         async with httpx.AsyncClient(timeout=60.0) as client:
             ollama_ready = await self.check_ollama_available()
             
+            # Deterministic fast-path execution (guarantees direct user actions succeed 100%)
+            executed_tools = []
+            direct_intent = match_deterministic_intent(user_message)
+            direct_tool_msg = None
+            if direct_intent:
+                tool_name, tool_args = direct_intent
+                tool_result = execute_tool(tool_name, tool_args, self.repo)
+                executed_tools.append({
+                    "name": tool_name,
+                    "arguments": tool_args,
+                    "result": tool_result
+                })
+                direct_tool_msg = tool_result.get("message") if isinstance(tool_result, dict) else str(tool_result)
+
             # Step 1: Extract Local Context (Gemma Agent / FastEmbed)
             context_dossier = await self._extract_local_context(user_message, client, ollama_ready)
 
@@ -188,31 +286,36 @@ class HybridOrchestrator:
                     "role": "system",
                     "content": f"RELEVANT LOCAL CONTEXT:\n{context_dossier}"
                 })
+            if direct_tool_msg:
+                messages.append({
+                    "role": "system",
+                    "content": f"SYSTEM NOTICE: User action already executed: {direct_tool_msg}. Confirm this concisely to the user."
+                })
             if history:
                 messages.extend(history)
             messages.append({"role": "user", "content": user_message})
 
-            executed_tools = []
             final_reply = ""
             active_model = ""
             agents_used = {}
+            error_details = []
 
             has_cloud = bool(self.gemini_api_key or self.openrouter_api_key)
 
             if self.mode == "hybrid" and ollama_ready and has_cloud:
                 llama_headers = {"Content-Type": "application/json"}
-                try:
-                    reply, tools = await self._execute_tool_loop(
-                        messages=messages.copy(),
-                        base_url=self.ollama_base_url,
-                        headers=llama_headers,
-                        model_name=self.ollama_planner_model,
-                        client=client
-                    )
-                    executed_tools = tools
-                    agents_used["tools_agent"] = f"Local ({self.ollama_planner_model})"
-                except Exception as e:
-                    logger.warning(f"Llama3 local tool step failed: {e}")
+                reply, tools, local_err = await self._execute_tool_loop(
+                    messages=messages.copy(),
+                    base_url=self.ollama_base_url,
+                    headers=llama_headers,
+                    model_name=self.ollama_planner_model,
+                    client=client
+                )
+                if tools:
+                    executed_tools.extend(tools)
+                if local_err:
+                    error_details.append(f"Local ({self.ollama_planner_model}): {local_err}")
+                agents_used["tools_agent"] = f"Local ({self.ollama_planner_model})"
 
                 if self.gemini_api_key:
                     cloud_url = self.gemini_base_url
@@ -233,7 +336,7 @@ class HybridOrchestrator:
                     cloud_model = self.openrouter_model
                     provider_name = f"OpenRouter ({cloud_model})"
 
-                cloud_reply, extra_tools = await self._execute_tool_loop(
+                cloud_reply, extra_tools, cloud_err = await self._execute_tool_loop(
                     messages=messages,
                     base_url=cloud_url,
                     headers=cloud_headers,
@@ -242,28 +345,43 @@ class HybridOrchestrator:
                 )
                 if extra_tools:
                     executed_tools.extend(extra_tools)
+                if cloud_err:
+                    error_details.append(f"Cloud ({cloud_model}): {cloud_err}")
 
-                final_reply = cloud_reply or reply or "Plan coordinated successfully."
                 active_model = f"Hybrid Mesh: {self.ollama_planner_model} + {cloud_model}"
                 agents_used["synthesis_agent"] = provider_name
                 agents_used["context_agent"] = f"Local ({self.ollama_context_model})"
 
+                if direct_tool_msg and not (cloud_reply or reply):
+                    final_reply = f"✅ {direct_tool_msg}"
+                elif cloud_reply or reply:
+                    final_reply = cloud_reply or reply
+                else:
+                    err_summary = " | ".join(error_details)
+                    final_reply = f"⚠️ Could not reach AI models: {err_summary}. Please verify your model names and keys in Settings."
+
             elif (self.mode == "local_only" or not has_cloud) and ollama_ready:
                 llama_headers = {"Content-Type": "application/json"}
-                reply, tools = await self._execute_tool_loop(
+                reply, tools, local_err = await self._execute_tool_loop(
                     messages=messages,
                     base_url=self.ollama_base_url,
                     headers=llama_headers,
                     model_name=self.ollama_planner_model,
                     client=client
                 )
-                final_reply = reply or "Local agent loop completed."
-                executed_tools = tools
+                if tools:
+                    executed_tools.extend(tools)
                 active_model = f"Local ({self.ollama_planner_model})"
                 agents_used = {
                     "context_agent": f"Local ({self.ollama_context_model})",
                     "planner_agent": f"Local ({self.ollama_planner_model})"
                 }
+                if direct_tool_msg and not reply:
+                    final_reply = f"✅ {direct_tool_msg}"
+                elif reply:
+                    final_reply = reply
+                else:
+                    final_reply = f"⚠️ Local model error: {local_err or 'No response'}. Check if {self.ollama_planner_model} is running."
 
             elif has_cloud:
                 if self.gemini_api_key:
@@ -285,19 +403,37 @@ class HybridOrchestrator:
                     cloud_model = self.openrouter_model
                     provider_label = f"OpenRouter ({cloud_model})"
 
-                reply, tools = await self._execute_tool_loop(
+                reply, tools, cloud_err = await self._execute_tool_loop(
                     messages=messages,
                     base_url=cloud_url,
                     headers=cloud_headers,
                     model_name=cloud_model,
                     client=client
                 )
-                final_reply = reply or "Cloud agent loop completed."
-                executed_tools = tools
+                if tools:
+                    executed_tools.extend(tools)
                 active_model = provider_label
                 agents_used = {"cloud_agent": provider_label}
 
+                if direct_tool_msg and not reply:
+                    final_reply = f"✅ {direct_tool_msg}"
+                elif reply:
+                    final_reply = reply
+                else:
+                    final_reply = f"⚠️ Cloud AI error: {cloud_err or 'No response'}. Check your API key or model in Settings."
+
             else:
+                if direct_tool_msg:
+                    return {
+                        "reply": f"✅ {direct_tool_msg}",
+                        "tool_calls": executed_tools,
+                        "model": "offline-direct",
+                        "orchestration": {
+                            "mode": self.mode,
+                            "status": "deterministic_execution"
+                        }
+                    }
+
                 return {
                     "reply": (
                         "⚠️ **AI Models Not Connected**\n\n"

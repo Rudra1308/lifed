@@ -1,8 +1,9 @@
-﻿from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.app.database import get_db
 from backend.app.storage.repository import LifedRepository
+from backend.app.storage.sync import schedule_auto_sync_and_push
 from backend.app.schemas.schemas import GoalCreate, GoalUpdate, GoalRead
 
 router = APIRouter(prefix="/api/goals", tags=["Goals"])
@@ -15,7 +16,9 @@ def list_goals(status: Optional[str] = None, db: Session = Depends(get_db)):
 @router.post("", response_model=GoalRead)
 def create_goal(payload: GoalCreate, db: Session = Depends(get_db)):
     repo = LifedRepository(db)
-    return repo.create_goal(title=payload.title, description=payload.description, status=payload.status or "active")
+    goal = repo.create_goal(title=payload.title, description=payload.description, status=payload.status or "active")
+    schedule_auto_sync_and_push(repo)
+    return goal
 
 @router.get("/{goal_id}", response_model=GoalRead)
 def get_goal(goal_id: str, db: Session = Depends(get_db)):
@@ -31,6 +34,7 @@ def update_goal(goal_id: str, payload: GoalUpdate, db: Session = Depends(get_db)
     goal = repo.update_goal(goal_id, **payload.model_dump(exclude_unset=True))
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
+    schedule_auto_sync_and_push(repo)
     return goal
 
 @router.delete("/{goal_id}")
@@ -39,4 +43,5 @@ def delete_goal(goal_id: str, db: Session = Depends(get_db)):
     success = repo.delete_goal(goal_id)
     if not success:
         raise HTTPException(status_code=404, detail="Goal not found")
+    schedule_auto_sync_and_push(repo)
     return {"success": True, "message": "Goal deleted"}

@@ -12,6 +12,11 @@ import httpx
 
 from backend.app.config import settings
 from backend.app.storage.repository import LifedRepository
+from backend.app.notifications.quotes_bank import (
+    get_deterministic_daily_quote,
+    build_ai_quote_prompt,
+    CURATED_QUOTES
+)
 
 logger = logging.getLogger("lifed.notifications")
 
@@ -50,7 +55,8 @@ async def generate_personalized_quote(
 ) -> str:
     """
     Generate an inspiring quote matching the user's example quote style and tone.
-    Uses free Gemini 2.0 Flash, local Ollama, or OpenRouter; falls back to curated bank.
+    Uses free Gemini 2.0 Flash, local Ollama, or OpenRouter; falls back to 100+ curated bank.
+    Guarantees non-repeating fresh quotes.
     """
     user = repo.get_default_user()
     prefs = {}
@@ -62,16 +68,19 @@ async def generate_personalized_quote(
 
     example = (example_quote or prefs.get("example_quote") or "").strip()
     quote_theme = (theme or prefs.get("quote_theme") or "Stoic resilience, focus, and relentless momentum").strip()
+    recent_quotes = prefs.get("quote_history", [])
 
-    prompt = (
-        f"You are a master philosophical advisor and performance coach.\n"
-        f"The user loves this example quote:\n\"{example or 'The impediment to action advances action. What stands in the way becomes the way.'}\"\n"
-        f"Their desired theme/philosophy is: \"{quote_theme}\".\n\n"
-        f"Instructions:\n"
-        f"1. Generate a single, punchy, profound motivational quote in the EXACT SAME stylistic cadence, tone, and spirit.\n"
-        f"2. Keep it under 2 sentences.\n"
-        f"3. Return ONLY the quote text (wrapped in quotes), with an optional concise attribution if fictional/historical. No other conversational words."
+    prompt = build_ai_quote_prompt(
+        example_quote=example or "The impediment to action advances action. What stands in the way becomes the way.",
+        base_theme=quote_theme,
+        recent_quotes=recent_quotes
     )
+
+    def _record_quote(q: str):
+        if q and q not in recent_quotes:
+            recent_quotes.append(q)
+            prefs["quote_history"] = recent_quotes[-30:]
+            repo.update_user_settings(preferences=prefs)
 
     # 1. Try Google Gemini (Free tier)
     gemini_key = prefs.get("gemini_api_key") or settings.gemini_api_key
@@ -84,14 +93,15 @@ async def generate_personalized_quote(
                     json={
                         "model": prefs.get("gemini_model") or settings.gemini_model,
                         "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.7,
-                        "max_tokens": 100,
+                        "temperature": 0.85,
+                        "max_tokens": 120,
                     }
                 )
                 if res.status_code == 200:
                     data = res.json()
                     quote = data["choices"][0]["message"]["content"].strip()
                     if quote:
+                        _record_quote(quote)
                         return quote
         except Exception as e:
             logger.warning(f"Gemini quote generation failed: {e}")
@@ -107,20 +117,21 @@ async def generate_personalized_quote(
                     headers={
                         "Authorization": f"Bearer {openrouter_key}",
                         "Content-Type": "application/json",
-                        "HTTP-Referer": "https://github.com/lifed/lifed",
+                        "HTTP-Referer": "https://github.com/Rudra1308/lifed",
                         "X-Title": "Lifed Morning Digest"
                     },
                     json={
                         "model": model,
                         "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.7,
-                        "max_tokens": 100,
+                        "temperature": 0.85,
+                        "max_tokens": 120,
                     }
                 )
                 if res.status_code == 200:
                     data = res.json()
                     quote = data["choices"][0]["message"]["content"].strip()
                     if quote:
+                        _record_quote(quote)
                         return quote
         except Exception as e:
             logger.warning(f"OpenRouter quote generation failed: {e}")
@@ -135,26 +146,23 @@ async def generate_personalized_quote(
                 json={
                     "model": ollama_model,
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.7,
-                    "max_tokens": 100,
+                    "temperature": 0.85,
+                    "max_tokens": 120,
                 }
             )
             if res.status_code == 200:
                 data = res.json()
                 quote = data["choices"][0]["message"]["content"].strip()
                 if quote:
+                    _record_quote(quote)
                     return quote
     except Exception:
         pass
 
-    # 4. Offline Fallback selection
-    theme_lower = quote_theme.lower()
-    for cat, quotes in FALLBACK_QUOTES.items():
-        if cat in theme_lower:
-            return random.choice(quotes)
-
-    all_quotes = [q for group in FALLBACK_QUOTES.values() for q in group]
-    return random.choice(all_quotes)
+    # 4. Non-Repeating Curated Bank
+    fallback_quote = get_deterministic_daily_quote(history=recent_quotes)
+    _record_quote(fallback_quote)
+    return fallback_quote
 
 
 async def build_morning_digest(

@@ -6,6 +6,14 @@ import { GridBackground } from "@/components/GridBackground";
 export const metadata: Metadata = {
   title: "Lifed — Personal AI Command Center",
   description: "A lightweight, personal-first AI command center with warped gravity grid visual language, goals, tasks, memory, and intelligent planning.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" }
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

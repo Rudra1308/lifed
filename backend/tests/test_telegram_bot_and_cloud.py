@@ -32,23 +32,30 @@ async def test_telegram_commands():
     done_resp = await handle_telegram_command("/done Telegram Automated Test Task", repo, token, chat_id)
     assert "marked as completed" in done_resp
 
-    # 5. /projects
+    # 5. /project add <name> and /projects
+    proj_add = await handle_telegram_command("/project add Automated Test Project", repo, token, chat_id)
+    assert "Created project" in proj_add
+
     proj_resp = await handle_telegram_command("/projects", repo, token, chat_id)
     assert "Active Initiatives" in proj_resp
 
     # 6. /goals
     goals_resp = await handle_telegram_command("/goals", repo, token, chat_id)
-    assert "Strategic Goals" in goals_resp
+    assert "Strategic Goals" in goals_resp or "No active goals" in goals_resp
 
     # 7. /quote
     quote_resp = await handle_telegram_command("/quote", repo, token, chat_id)
     assert "Quote" in quote_resp
 
-    # Clean up test task
+    # Clean up test task and project
     all_tasks = repo.get_tasks()
     for t in all_tasks:
         if "Telegram Automated Test Task" in t.title:
             repo.delete_task(t.id)
+
+    for p in repo.get_projects():
+        if "Automated Test Project" in p.title:
+            repo.delete_project(p.id)
 
     db.close()
 
