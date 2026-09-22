@@ -13,7 +13,7 @@ else:
 
 class Settings(BaseModel):
     app_name: str = "Lifed API"
-    version: str = "1.0.0"
+    version: str = "3.0.0"
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./lifed.db")
     backend_host: str = os.getenv("BACKEND_HOST", "127.0.0.1")
     backend_port: int = int(os.getenv("BACKEND_PORT", "8000"))

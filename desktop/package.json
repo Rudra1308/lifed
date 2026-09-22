@@ -1,6 +1,6 @@
 {
   "name": "lifed-desktop",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "Lifed — Personal AI Command Center Desktop Application",
   "main": "main.js",
   "scripts": {

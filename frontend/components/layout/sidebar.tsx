@@ -77,7 +77,7 @@ export function Sidebar() {
             <div>
               <span className="font-bold tracking-tight text-foreground text-lg">Lifed</span>
               <span className="ml-2 rounded border border-border/60 bg-secondary/70 px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted-foreground uppercase">
-                v2.0
+                v3.0
               </span>
             </div>
           </Link>

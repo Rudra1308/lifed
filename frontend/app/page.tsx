@@ -39,7 +39,7 @@ export default function HomePage() {
             <Image src="/logo.png" alt="Lifed Logo" width={18} height={18} className="object-contain" />
           </div>
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="uppercase tracking-widest text-foreground font-bold">LIFED v2.0</span>
+          <span className="uppercase tracking-widest text-foreground font-bold">LIFED v3.0</span>
         </div>
 
         <div className="flex items-center space-x-3">
