@@ -1,28 +1,48 @@
 {
-  "last_synced": "2026-09-25T12:49:30.080315",
+  "last_synced": "2026-09-25T12:49:41.164246",
   "quote_config": {
-    "example_quote": "The impediment to action advances action. What stands in the way becomes the way. — Marcus Aurelius",
-    "quote_theme": "Stoic resilience, focus, and relentless momentum",
+    "example_quote": "We suffer more often in imagination than in reality. — Seneca",
+    "quote_theme": "Stoic endurance and mental toughness",
     "custom_model": "anthropic/claude-3.5-sonnet"
   },
   "quote_history": [],
-  "goals": [],
-  "projects": [],
-  "tasks": [
+  "goals": [
     {
-      "id": "5d70b9ee-3a2e-4c47-9863-a3c2a740a97e",
-      "title": "Implement Kinetic Matrix",
-      "priority": "urgent",
-      "estimated_duration": 45,
-      "deadline": null,
-      "status": "todo"
+      "id": "80522ae2-86b7-453c-a00e-f5c14fc91b42",
+      "title": "write assignments.",
+      "progress": 0.0,
+      "status": "active"
     },
     {
-      "id": "7cfd5c6e-a096-4f0d-af1a-e5a46d12fcee",
-      "title": "Draft Architecture Diagram",
-      "priority": "medium",
+      "id": "82f9f6c2-90b3-4ce3-b6c9-097c617db5a3",
+      "title": "get more reach on linkedin",
+      "progress": 0.0,
+      "status": "active"
+    }
+  ],
+  "projects": [
+    {
+      "id": "376874e7-f32a-42dd-8076-fd275a386eab",
+      "title": "Automated Test Project",
+      "status": "active",
+      "total_tasks": 0,
+      "completed_tasks": 0
+    },
+    {
+      "id": "231fe7fd-d2fb-41fb-9091-5b4304626f2d",
+      "title": "invedge ai",
+      "status": "active",
+      "total_tasks": 1,
+      "completed_tasks": 0
+    }
+  ],
+  "tasks": [
+    {
+      "id": "14e1a686-5449-4b4c-ad79-b6bd24fa018c",
+      "title": "work on invedge ai",
+      "priority": "high",
       "estimated_duration": 30,
-      "deadline": null,
+      "deadline": "2026-11-08",
       "status": "todo"
     }
   ]
