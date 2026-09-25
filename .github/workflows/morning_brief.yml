@@ -2,9 +2,9 @@ name: Lifed Morning Brief Cloud Scheduler
 
 on:
   schedule:
-    # 02:30 UTC = 08:00 AM IST (Indian Standard Time, UTC+5:30)
-    # Adjust this cron expression to match your local timezone if needed
-    - cron: '30 2 * * *'
+    # 06:00 UTC = 11:30 AM IST (Indian Standard Time, UTC+5:30)
+    # Note: Minute :00 can face queue delays on GitHub Actions. You can also use '55 5 * * *' (11:25 AM IST) for faster triggers.
+    - cron: '0 6 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI at any time
 
 jobs:

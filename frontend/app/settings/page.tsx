@@ -377,6 +377,9 @@ export default function SettingsPage() {
                           <li><code>TELEGRAM_CHAT_ID</code> (your chat ID from @userinfobot)</li>
                           <li><code>GEMINI_API_KEY</code> (optional, for free cloud AI quote generation)</li>
                         </ul>
+                        <p className="text-[10px] text-muted-foreground pt-1">
+                          ⏰ <b>Cloud Schedule:</b> Runs via <code className="text-foreground">.github/workflows/morning_brief.yml</code> in UTC. For <b>{notifSettings.time || "11:30"} IST</b>, the cron is set to <b>06:00 UTC</b> (<code>cron: '0 6 * * *'</code>).
+                        </p>
                       </div>
                     </div>
                   </>
