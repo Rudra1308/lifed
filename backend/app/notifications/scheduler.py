@@ -36,7 +36,7 @@ async def morning_scheduler_loop():
                         prefs = {}
 
                 enabled = prefs.get("notification_enabled", False)
-                target_time = prefs.get("notification_time", "09:00")
+                target_time = prefs.get("notification_time", "09:23")
 
                 if enabled and current_time == target_time and _last_sent_date != today_str and prefs.get("last_brief_sent_date") != today_str:
                     logger.info(f"[SCHEDULER] Triggering morning brief for {today_str} at {current_time}...")

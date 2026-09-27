@@ -12,9 +12,9 @@ set TASK_NAME=LifedMorningBrief
 set SCRIPT_DIR=%~dp0
 set RUNNER_BAT=%SCRIPT_DIR%run_morning_brief.bat
 
-:: Allow custom time as argument (default: 09:00)
+:: Allow custom time as argument (default: 09:23)
 set BRIEF_TIME=%1
-if "%BRIEF_TIME%"=="" set BRIEF_TIME=09:00
+if "%BRIEF_TIME%"=="" set BRIEF_TIME=09:23
 
 :: Create the scheduled task to run at specified time daily with exact time precision
 schtasks /create /tn "%TASK_NAME%" /tr "%RUNNER_BAT%" /sc daily /st %BRIEF_TIME% /f /ru "%USERNAME%"

@@ -378,7 +378,7 @@ export default function SettingsPage() {
                           <li><code>GEMINI_API_KEY</code> (optional, for free cloud AI quote generation)</li>
                         </ul>
                         <p className="text-[10px] text-muted-foreground pt-1">
-                          ⏰ <b>Cloud Schedule:</b> Runs via <code className="text-foreground">.github/workflows/morning_brief.yml</code> in UTC. For <b>{notifSettings.time || "09:00"} IST</b>, the cron is set to <b>03:30 UTC</b> (<code>cron: '30 3 * * *'</code>).
+                          ⏰ <b>Cloud Schedule:</b> Runs via <code className="text-foreground">.github/workflows/morning_brief.yml</code> in UTC. For <b>{notifSettings.time || "09:23"} IST</b>, the cron is set to <b>03:53 UTC</b> (<code>cron: '53 3 * * *'</code>).
                         </p>
                       </div>
                     </div>
