@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-09-27T10:36:08.858997",
+  "last_synced": "2026-09-27T10:37:45.713083",
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
     "quote_theme": "Stoic endurance and mental toughness",
@@ -27,5 +27,14 @@
     }
   ],
   "projects": [],
-  "tasks": []
+  "tasks": [
+    {
+      "id": "6cc30192-cd46-4d3e-b8bc-757db63d26d8",
+      "title": "MAKE ML NOTES",
+      "priority": "medium",
+      "estimated_duration": 30,
+      "deadline": "2026-10-05",
+      "status": "todo"
+    }
+  ]
 }
