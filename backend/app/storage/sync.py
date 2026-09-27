@@ -88,8 +88,10 @@ def export_sync_state(repo: LifedRepository) -> Dict[str, Any]:
         ]
 
         now_iso = datetime.now().isoformat()
+        last_brief_sent_date = prefs.get("last_brief_sent_date") or old_state.get("last_brief_sent_date")
         state = {
             "last_synced": now_iso,
+            "last_brief_sent_date": last_brief_sent_date,
             "quote_config": {
                 "example_quote": prefs.get("example_quote", "The impediment to action advances action. What stands in the way becomes the way. — Marcus Aurelius"),
                 "quote_theme": prefs.get("quote_theme", "Stoic resilience, focus, and relentless momentum"),

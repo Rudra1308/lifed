@@ -8,7 +8,7 @@ and AI anti-repetition negative prompting.
 import os
 import json
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Optional
 import httpx
@@ -114,7 +114,17 @@ async def main():
     custom_model = quote_config.get("custom_model")
     recent_quotes = state.get("quote_history", [])
 
-    today_str = datetime.now().strftime("%A, %B %d, %Y")
+    # Use Indian Standard Time (IST, UTC+5:30) for accurate local date
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now_ist = datetime.now(ist)
+    today_ist_iso = now_ist.strftime("%Y-%m-%d")
+    today_str = now_ist.strftime("%A, %B %d, %Y")
+
+    # Deduplication check: if local Windows task already dispatched brief today, skip
+    if state.get("last_brief_sent_date") == today_ist_iso:
+        print(f"[CLOUD LOG] Morning brief already dispatched today ({today_ist_iso}). Skipping duplicate run.")
+        return
+
     quote = await generate_quote(
         example_quote=example_quote,
         theme=quote_theme,
@@ -173,8 +183,10 @@ async def main():
             "text": message,
             "parse_mode": "Markdown"
         })
+        sent_success = False
         if res.status_code == 200:
             print("[SUCCESS] Morning brief successfully dispatched via Telegram!")
+            sent_success = True
         else:
             # Fallback to plain text if Markdown had parsing issue
             plain_text = message.replace("*", "").replace("_", "")
@@ -184,8 +196,17 @@ async def main():
             })
             if res2.status_code == 200:
                 print("[SUCCESS] Morning brief dispatched as plain text!")
+                sent_success = True
             else:
                 print(f"[ERROR] Failed to send Telegram message: {res2.text}")
+
+        if sent_success:
+            state["last_brief_sent_date"] = today_ist_iso
+            try:
+                with open(sync_file, "w", encoding="utf-8") as f:
+                    json.dump(state, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                print(f"[CLOUD LOG] Could not save state: {e}")
 
 
 if __name__ == "__main__":

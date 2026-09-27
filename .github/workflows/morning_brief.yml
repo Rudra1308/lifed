@@ -2,10 +2,10 @@ name: Lifed Morning Brief Cloud Scheduler
 
 on:
   schedule:
-    # 06:00 UTC = 11:30 AM IST (Indian Standard Time, UTC+5:30)
-    # Note: Minute :00 can face queue delays on GitHub Actions. You can also use '55 5 * * *' (11:25 AM IST) for faster triggers.
-    - cron: '0 6 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub UI at any time
+    # 03:30 UTC = 09:00 AM IST (Indian Standard Time, UTC+5:30)
+    # Minute :30 avoids the congested top-of-hour (:00) runner queues.
+    - cron: '30 3 * * *'
+  workflow_dispatch: # Allows instant trigger from GitHub UI or external webhook API (e.g. cron-job.org)
 
 jobs:
   send-morning-brief:
