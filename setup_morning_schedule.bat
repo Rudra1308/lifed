@@ -12,9 +12,9 @@ set TASK_NAME=LifedMorningBrief
 set PYTHON_EXE=python
 set SCRIPT_DIR=%~dp0
 
-:: Allow custom time as argument (default: 11:30)
+:: Allow custom time as argument (default: 11:00)
 set BRIEF_TIME=%1
-if "%BRIEF_TIME%"=="" set BRIEF_TIME=11:30
+if "%BRIEF_TIME%"=="" set BRIEF_TIME=11:00
 
 :: Create the scheduled task to run at specified time daily
 schtasks /create /tn "%TASK_NAME%" /tr "%PYTHON_EXE% -m backend.app.notifications.sender" /sc daily /st %BRIEF_TIME% /f /ru "%USERNAME%"
