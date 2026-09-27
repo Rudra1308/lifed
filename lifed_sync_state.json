@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-09-27T10:26:33.204761",
+  "last_synced": "2026-09-27T10:26:50.602023",
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
     "quote_theme": "Stoic endurance and mental toughness",
@@ -20,23 +20,6 @@
       "status": "active"
     }
   ],
-  "projects": [
-    {
-      "id": "231fe7fd-d2fb-41fb-9091-5b4304626f2d",
-      "title": "invedge ai",
-      "status": "active",
-      "total_tasks": 1,
-      "completed_tasks": 0
-    }
-  ],
-  "tasks": [
-    {
-      "id": "14e1a686-5449-4b4c-ad79-b6bd24fa018c",
-      "title": "work on invedge ai",
-      "priority": "high",
-      "estimated_duration": 30,
-      "deadline": "2026-11-08",
-      "status": "todo"
-    }
-  ]
+  "projects": [],
+  "tasks": []
 }
