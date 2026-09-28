@@ -1,16 +1,17 @@
 {
-  "last_synced": "2026-09-27T13:16:41.554721",
+  "last_synced": "2026-09-28T12:06:06.811749",
+  "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
     "quote_theme": "Taunting and questioning me",
-    "custom_model": "google/gemini-2.5-flash"
+    "custom_model": "gemini-2.0-flash"
   },
   "quote_history": [],
   "goals": [
     {
       "id": "d7220081-ffb9-4a6d-9622-df0c7b008723",
       "title": "invedge ai",
-      "progress": 0.0,
+      "progress": 12.0,
       "status": "active"
     },
     {
