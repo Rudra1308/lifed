@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-10-03T23:59:11.660891",
+  "last_synced": "2026-10-04T00:02:28.723398",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
@@ -21,7 +21,15 @@
       "status": "active"
     }
   ],
-  "projects": [],
+  "projects": [
+    {
+      "id": "98055341-690f-4e44-92ce-0e5a7c9c12b6",
+      "title": "Automated Test Project",
+      "status": "active",
+      "total_tasks": 0,
+      "completed_tasks": 0
+    }
+  ],
   "tasks": [
     {
       "id": "905f9e40-ac0a-468f-b2ff-41f1c5a0db9c",
