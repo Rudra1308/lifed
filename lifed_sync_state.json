@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-10-03T23:57:51.324598",
+  "last_synced": "2026-10-03T23:59:11.660891",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
@@ -23,6 +23,14 @@
   ],
   "projects": [],
   "tasks": [
+    {
+      "id": "905f9e40-ac0a-468f-b2ff-41f1c5a0db9c",
+      "title": "give interview and apply to 5 remote jobs",
+      "priority": "high",
+      "estimated_duration": 300,
+      "deadline": "2026-10-13",
+      "status": "todo"
+    },
     {
       "id": "6cc30192-cd46-4d3e-b8bc-757db63d26d8",
       "title": "MAKE ML NOTES",
