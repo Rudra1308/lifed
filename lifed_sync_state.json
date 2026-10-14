@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-10-14T11:44:49.832855",
+  "last_synced": "2026-10-14T11:53:40.221309",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
@@ -16,14 +16,5 @@
     }
   ],
   "projects": [],
-  "tasks": [
-    {
-      "id": "905f9e40-ac0a-468f-b2ff-41f1c5a0db9c",
-      "title": "give interview and apply to 5 remote jobs",
-      "priority": "high",
-      "estimated_duration": 300,
-      "deadline": "2026-10-13",
-      "status": "todo"
-    }
-  ]
+  "tasks": []
 }
