@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-10-17T03:28:55.523688",
+  "last_synced": "2026-10-17T03:29:06.591068",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
@@ -25,6 +25,14 @@
     }
   ],
   "tasks": [
+    {
+      "id": "21aeef22-8b8f-49bb-9511-587f2c80d6fd",
+      "title": "add admin panel to demo website",
+      "priority": "medium",
+      "estimated_duration": 30,
+      "deadline": null,
+      "status": "todo"
+    },
     {
       "id": "a2556615-46a8-43b4-b92a-387799f1e109",
       "title": "send ansh the brochure,demo admin panel video.",
