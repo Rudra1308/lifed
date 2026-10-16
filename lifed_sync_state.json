@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-10-17T03:28:11.872870",
+  "last_synced": "2026-10-17T03:28:55.523688",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "We suffer more often in imagination than in reality. — Seneca",
@@ -24,5 +24,14 @@
       "completed_tasks": 0
     }
   ],
-  "tasks": []
+  "tasks": [
+    {
+      "id": "a2556615-46a8-43b4-b92a-387799f1e109",
+      "title": "send ansh the brochure,demo admin panel video.",
+      "priority": "medium",
+      "estimated_duration": 30,
+      "deadline": null,
+      "status": "todo"
+    }
+  ]
 }
