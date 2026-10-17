@@ -1,10 +1,13 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, nativeImage } = require("electron");
+const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, nativeImage, screen } = require("electron");
 const path = require("path");
 const { spawn, execSync } = require("child_process");
 const http = require("http");
+const { AppMonitor } = require("./app-monitor");
 
 let mainWindow = null;
 let quickCaptureWindow = null;
+let notchWindow = null;
+let appMonitor = null;
 let backendProcess = null;
 let frontendProcess = null;
 let isQuitting = false;
@@ -169,8 +172,50 @@ function toggleQuickCapture() {
   }
 }
 
+function createNotchWindow() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const screenWidth = primaryDisplay.workAreaSize.width;
+
+  const INITIAL_WIDTH = 340;
+  const INITIAL_HEIGHT = 44;
+  const x = Math.round((screenWidth - INITIAL_WIDTH) / 2);
+
+  notchWindow = new BrowserWindow({
+    width: INITIAL_WIDTH,
+    height: INITIAL_HEIGHT,
+    x: x,
+    y: 0,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    hasShadow: false,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  // Keep it topmost above fullscreen windows
+  notchWindow.setAlwaysOnTop(true, "screen-saver");
+  notchWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+  notchWindow.loadURL(`http://localhost:${FRONTEND_PORT}/notch`);
+
+  notchWindow.once("ready-to-show", () => {
+    notchWindow.show();
+  });
+}
+
 function cleanupProcesses() {
   console.log("[Desktop] Cleaning up background processes...");
+  if (appMonitor) {
+    appMonitor.stop();
+    appMonitor = null;
+  }
   if (backendProcess) {
     try {
       if (process.platform === "win32") {
@@ -221,6 +266,48 @@ app.whenReady().then(async () => {
 
   createMainWindow();
   createQuickCaptureWindow();
+  createNotchWindow();
+
+  // Initialize Native App Monitor
+  appMonitor = new AppMonitor({
+    pollInterval: 2000,
+    focusGuardDurationSec: 60,
+    sessionNudgeDurationSec: 2700,
+  });
+
+  appMonitor.on("app-changed", (data) => {
+    if (notchWindow && !notchWindow.isDestroyed()) {
+      notchWindow.webContents.send("notch-state-update", data);
+    }
+  });
+
+  appMonitor.on("state-tick", (data) => {
+    if (notchWindow && !notchWindow.isDestroyed()) {
+      notchWindow.webContents.send("notch-state-update", data);
+    }
+  });
+
+  appMonitor.on("attention-requested", (alert) => {
+    if (notchWindow && !notchWindow.isDestroyed()) {
+      notchWindow.webContents.send("notch-alert", alert);
+    }
+  });
+
+  appMonitor.on("alert-resolved", (res) => {
+    if (notchWindow && !notchWindow.isDestroyed()) {
+      notchWindow.webContents.send("notch-alert-resolved", res);
+    }
+  });
+
+  appMonitor.on("request-show-main", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  appMonitor.start();
 
   // Register Global Shortcuts (User preferred: Ctrl+Space)
   const registeredCtrlSpace = globalShortcut.register("CommandOrControl+Space", toggleQuickCapture);
@@ -231,9 +318,46 @@ app.whenReady().then(async () => {
     globalShortcut.register("Alt+Space", toggleQuickCapture);
   }
 
-
-
   // IPC Handlers
+  ipcMain.on("notch-set-size", (event, { width, height }) => {
+    if (!notchWindow || notchWindow.isDestroyed()) return;
+    try {
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const screenWidth = primaryDisplay.workAreaSize.width;
+      const newX = Math.round((screenWidth - width) / 2);
+      notchWindow.setBounds({
+        x: newX,
+        y: 0,
+        width: Math.round(width),
+        height: Math.round(height),
+      });
+    } catch (e) {
+      console.error("[Desktop] notch-set-size error:", e);
+    }
+  });
+
+  ipcMain.on("notch-action-response", (event, { alertId, actionId }) => {
+    if (appMonitor) {
+      appMonitor.handleAction(alertId, actionId);
+    }
+  });
+
+  ipcMain.on("notch-trigger-test", (event, type) => {
+    if (appMonitor) {
+      appMonitor.triggerSimulationAlert(type);
+    }
+  });
+
+  ipcMain.on("quick-capture-toggle", () => {
+    toggleQuickCapture();
+  });
+
+  ipcMain.on("app-focus-or-launch", (event, { appName, appId }) => {
+    if (appMonitor) {
+      appMonitor.activateApp(appName, appId);
+    }
+  });
+
   ipcMain.on("quick-capture-hide", () => {
     if (quickCaptureWindow) quickCaptureWindow.hide();
   });

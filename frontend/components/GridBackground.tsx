@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
 
 // ==========================================
 // TUNABLE CONSTANTS
@@ -25,8 +26,12 @@ interface Star {
 export function GridBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { resolvedTheme } = useTheme();
+  const pathname = usePathname();
+
+  const isOverlay = pathname === "/quick-capture" || pathname === "/notch";
 
   useEffect(() => {
+    if (isOverlay) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -256,7 +261,9 @@ export function GridBackground() {
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [resolvedTheme]);
+  }, [resolvedTheme, isOverlay]);
+
+  if (isOverlay) return null;
 
   return (
     <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden select-none">

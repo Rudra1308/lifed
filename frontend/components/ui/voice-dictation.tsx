@@ -220,6 +220,13 @@ export function VoiceDictation({
       return;
     }
 
+    // Request any remaining buffered audio before stopping
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      try {
+        mediaRecorderRef.current.requestData();
+      } catch (e) {}
+    }
+
     // Stop recorder and collect final audio chunks
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       setIsProcessing(true);
@@ -230,26 +237,48 @@ export function VoiceDictation({
           const mimeType = recorder.mimeType || "audio/webm";
           const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
 
-          if (audioBlob.size > 200) {
+          if (audioBlob.size > 80) {
             const formData = new FormData();
             formData.append("file", audioBlob, "recording.webm");
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+            let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+            if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+              apiUrl = "http://localhost:8000";
+            }
+
+            const headers: Record<string, string> = {};
+            if (typeof window !== "undefined") {
+              const geminiKey = localStorage.getItem("lifed_gemini_key");
+              if (geminiKey) headers["X-Gemini-Key"] = geminiKey;
+            }
+
             const res = await fetch(`${apiUrl}/api/voice/transcribe`, {
               method: "POST",
+              headers,
               body: formData,
             });
 
             if (res.ok) {
               const data = await res.json();
               if (data.text && data.text.trim()) {
+                setErrorMsg(null);
                 onTranscript(data.text.trim());
+              } else if (data.status === "no_speech_detected") {
+                setErrorMsg("No clear speech detected. Please speak closer to microphone.");
+                setTimeout(() => setErrorMsg(null), 3500);
               }
+            } else {
+              setErrorMsg("Transcription service error.");
+              setTimeout(() => setErrorMsg(null), 3500);
             }
+          } else {
+            setErrorMsg("Recording too short. Please hold to speak.");
+            setTimeout(() => setErrorMsg(null), 3500);
           }
         } catch (err: any) {
           console.error("[Voice] Transcription error:", err);
           setErrorMsg("Transcription failed. Please check backend connection.");
+          setTimeout(() => setErrorMsg(null), 4000);
         } finally {
           setIsProcessing(false);
           stopMedia();

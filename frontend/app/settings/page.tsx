@@ -21,6 +21,9 @@ import {
   Cloud,
   RefreshCw,
   GitBranch,
+  Monitor,
+  Compass,
+  ExternalLink,
 } from "lucide-react";
 import { api, apiRequest, SettingsData, NotificationSettingsData } from "@/lib/api";
 
@@ -655,6 +658,77 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Dynamic Island Notch & App Monitor Card (100% Free) */}
+        <Card className="border-cyan-500/30 shadow-md">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center space-x-2">
+                <Monitor className="w-5 h-5 text-cyan-400" />
+                <CardTitle>Dynamic Island Notch & App Observer (100% Free)</CardTitle>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant="success">100% FREE</Badge>
+                <Badge variant="secondary" className="font-mono text-[10px]">
+                  WIN32 NATIVE
+                </Badge>
+              </div>
+            </div>
+            <CardDescription>
+              Floating top-center island widget that detects active foreground apps (Brave, VS Code, Notion) and pops down interactive Focus Guard permission checks, session nudges, and background task reminders.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-3 rounded-lg border border-border/60 bg-secondary/15 space-y-1.5">
+                <div className="flex items-center space-x-1.5 text-xs font-semibold text-orange-400">
+                  <Flame className="w-3.5 h-3.5" />
+                  <span>Focus Guard</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Asks for permission if browsing in Brave during a scheduled high-priority task.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-lg border border-border/60 bg-secondary/15 space-y-1.5">
+                <div className="flex items-center space-x-1.5 text-xs font-semibold text-emerald-400">
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>Session Nudges</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Alerts on continuous 45m sessions to suggest a 5-minute stretch or logging progress.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-lg border border-border/60 bg-secondary/15 space-y-1.5">
+                <div className="flex items-center space-x-1.5 text-xs font-semibold text-cyan-400">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AI Reminders</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Pops down instantly when background AI analysis completes or deadlines approach.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs text-muted-foreground">
+              <div className="flex items-center space-x-2">
+                <span className="font-mono text-[11px]">Desktop Hotkeys:</span>
+                <span className="px-1.5 py-0.5 rounded bg-muted/60 font-mono text-[10px] text-foreground">Ctrl+Space</span>
+                <span className="text-[11px]">Quick-Capture</span>
+              </div>
+              <a
+                href="/notch"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center space-x-1 text-cyan-400 hover:text-cyan-300 font-mono text-xs transition-colors"
+              >
+                <span>Preview Notch Route</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </CardContent>
         </Card>
 
