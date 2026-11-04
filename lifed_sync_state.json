@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-11-04T22:51:36.249859",
+  "last_synced": "2026-11-04T22:53:01.973458",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "The more positive you are the better is your life- myself",
@@ -24,5 +24,14 @@
       "completed_tasks": 0
     }
   ],
-  "tasks": []
+  "tasks": [
+    {
+      "id": "f8f02450-7d73-485e-8a3f-324f4e9c90c4",
+      "title": "study for exam !!!",
+      "priority": "high",
+      "estimated_duration": 30,
+      "deadline": "2026-11-15",
+      "status": "todo"
+    }
+  ]
 }
