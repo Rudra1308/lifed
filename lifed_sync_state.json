@@ -1,5 +1,5 @@
 {
-  "last_synced": "2026-11-04T22:53:01.973458",
+  "last_synced": "2026-11-04T22:53:42.081538",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "The more positive you are the better is your life- myself",
@@ -20,7 +20,7 @@
       "id": "33c2625f-8b5f-4a70-937b-fed7d055c1f6",
       "title": "GET A REMOTE JOB/INTERNSHIP",
       "status": "active",
-      "total_tasks": 0,
+      "total_tasks": 1,
       "completed_tasks": 0
     }
   ],
@@ -31,6 +31,14 @@
       "priority": "high",
       "estimated_duration": 30,
       "deadline": "2026-11-15",
+      "status": "todo"
+    },
+    {
+      "id": "ff202aa5-b8d3-447f-bcaf-c8d33f65b74c",
+      "title": "implement all the fucking saved reels",
+      "priority": "medium",
+      "estimated_duration": 60,
+      "deadline": "2026-11-10",
       "status": "todo"
     }
   ]
