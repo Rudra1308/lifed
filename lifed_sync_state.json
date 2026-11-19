@@ -1,10 +1,10 @@
 {
-  "last_synced": "2026-11-04T22:55:19.778009",
+  "last_synced": "2026-11-19T13:04:17.516638",
   "last_brief_sent_date": null,
   "quote_config": {
     "example_quote": "the more you persist, the more you conquer.",
     "quote_theme": "Taunting and questioning me",
-    "custom_model": "gemini-2.0-flash"
+    "custom_model": "google/gemini-3.5-flash"
   },
   "quote_history": [],
   "goals": [
@@ -25,6 +25,14 @@
     }
   ],
   "tasks": [
+    {
+      "id": "ed87871e-2fc9-4288-a15f-0f66dee7ee0a",
+      "title": "finish NLP homework tomorrow priority high",
+      "priority": "high",
+      "estimated_duration": 30,
+      "deadline": null,
+      "status": "todo"
+    },
     {
       "id": "f8f02450-7d73-485e-8a3f-324f4e9c90c4",
       "title": "study for exam !!!",
